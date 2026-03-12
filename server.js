@@ -14,23 +14,28 @@ contactAPI.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
 // Product map: Stripe product name → array of Dropbox links
 // Single products have one link in array, bundles have multiple
 const PRODUCTS = {
-  [process.env.PRODUCT_1_NAME]: [process.env.PRODUCT_1_LINK],
-  [process.env.PRODUCT_2_NAME]: [process.env.PRODUCT_2_LINK],
-  [process.env.PRODUCT_3_NAME]: [process.env.PRODUCT_3_LINK],
-  // Example bundle with 3 files:
-  'Complete TP-7 Suite': [
-    process.env.PRODUCT_1_LINK,  // TP-7 Stem Recorder
-    process.env.PRODUCT_2_LINK,  // TP-7 Stem Splitter
-    process.env.PRODUCT_3_LINK,  // TP-7 Speed Sync
+  'tp7_stem_recorder': [process.env.PRODUCT_1_LINK],
+  'tp_stem_splitter': [process.env.PRODUCT_2_LINK],
+  'tp7_speed_sync': [process.env.PRODUCT_3_LINK],
+  'chroma_control': [process.env.PRODUCT_4_LINK],
+  'subphatty_sync': [process.env.PRODUCT_5_LINK],
+  'art_tools': [process.env.PRODUCT_6_LINK],
+
+  'tp7_tools': [
+    process.env.PRODUCT_1_LINK,
+    process.env.PRODUCT_2_LINK,
+    process.env.PRODUCT_3_LINK,
   ],
 };
 
 // Product metadata: display name for each Dropbox link
-// Used to show individual product names on download buttons
 const PRODUCT_META = {
-  [process.env.PRODUCT_1_LINK]: 'TP-7 Stem Recorder',
-  [process.env.PRODUCT_2_LINK]: 'TP-7 Stem Splitter',
-  [process.env.PRODUCT_3_LINK]: 'TP-7 Speed Sync',
+  [process.env.PRODUCT_1_LINK]: 'tp7_stem_recorder',
+  [process.env.PRODUCT_2_LINK]: 'tp_stem_splitter',
+  [process.env.PRODUCT_3_LINK]: 'tp7_speed_sync',
+  [process.env.PRODUCT_4_LINK]: 'chroma_control',
+  [process.env.PRODUCT_5_LINK]: 'subphatty_sync',
+  [process.env.PRODUCT_6_LINK]: 'art_tools',
 };
 
 // Token store: active 48-hour download tokens held in memory
