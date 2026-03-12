@@ -20,6 +20,7 @@
   "homepage": "https://github.com/MattDonald/toolsbymatt_downloads#readme",
   "dependencies": {
     "@getbrevo/brevo": "^5.0.1",
+    "axios": "^1.13.6",
     "crypto": "^1.0.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",

@@ -2,17 +2,12 @@ require("dotenv").config();
 const express = require("express");
 const stripe  = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const crypto  = require("crypto");
-const brevo = require("@getbrevo/brevo");
-const app   = express();
+const axios   = require("axios");
+const app     = express();
 
-// Initialise Brevo API - set API key first
-const defaultClient = brevo.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
-
-// Create API instances
-const emailAPI = new brevo.TransactionalEmailsApi();
-const contactAPI = new brevo.ContactsApi();
+// Brevo API configuration
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const BREVO_API_URL = 'https://api.brevo.com/v3';
 
 // Product map: Stripe product name → array of Dropbox links
 // Single products have one link in array, bundles have multiple
@@ -169,20 +164,22 @@ async function addToCustomersList(email, fullName, productName) {
 // Add signup to the temporary 'Signup Pending Confirmation' list
 // Brevo automation will automatically send DOI email and move to Marketing Subscribers
 async function addToSignupPendingList(email, firstName, lastName) {
-  const contact   = new Brevo.CreateContact();
-  contact.email         = email;
-  contact.listIds       = [parseInt(process.env.SIGNUP_PENDING_LIST_ID)];
-  contact.updateEnabled = false; // Don't update if they already exist
-  contact.attributes    = {
-    FIRSTNAME: firstName,
-    LASTNAME:  lastName,
-    SOURCE: 'signup',
+  const contactData = {
+    email: email,
+    listIds: [parseInt(process.env.SIGNUP_PENDING_LIST_ID)],
+    updateEnabled: false,
+    attributes: {
+      FIRSTNAME: firstName,
+      LASTNAME: lastName,
+      SOURCE: 'signup',
+    }
   };
+
   try {
-    await contactAPI.createContact(contact);
+    await brevoAPI.post('/contacts', contactData);
     console.log(`Added to Signup Pending list: ${email}`);
   } catch (err) {
-    console.error("Brevo signup error:", err.body || err.message);
+    console.error("Brevo signup error:", err.response?.data || err.message);
     throw err;
   }
 }
@@ -194,29 +191,31 @@ async function sendDownloadEmail(email, firstName, productName, downloadUrls) {
   // Map each link to its display name from PRODUCT_META
   const productNames = dropboxLinks.map(link => PRODUCT_META[link] || productName);
   
-  const message = new Brevo.SendSmtpEmail();
-  message.to         = [{ email }];
-  message.sender     = { name: 'tools by matt', email: process.env.BREVO_SENDER_EMAIL };
-  message.templateId = parseInt(process.env.BREVO_TEMPLATE_ID);
-  message.params     = {
-    firstName,
-    productName,  // Overall product purchased (e.g. 'Complete TP-7 Suite')
-    downloadUrl1: downloadUrls[0] || '',
-    downloadUrl2: downloadUrls[1] || '',
-    downloadUrl3: downloadUrls[2] || '',
-    downloadUrl4: downloadUrls[3] || '',
-    downloadUrl5: downloadUrls[4] || '',
-    productName1: productNames[0] || '',  // Individual file name
-    productName2: productNames[1] || '',
-    productName3: productNames[2] || '',
-    productName4: productNames[3] || '',
-    productName5: productNames[4] || '',
+  const emailData = {
+    to: [{ email: email }],
+    sender: { name: 'Matt Donald', email: process.env.BREVO_SENDER_EMAIL },
+    templateId: parseInt(process.env.BREVO_TEMPLATE_ID),
+    params: {
+      firstName,
+      productName,
+      downloadUrl1: downloadUrls[0] || '',
+      downloadUrl2: downloadUrls[1] || '',
+      downloadUrl3: downloadUrls[2] || '',
+      downloadUrl4: downloadUrls[3] || '',
+      downloadUrl5: downloadUrls[4] || '',
+      productName1: productNames[0] || '',
+      productName2: productNames[1] || '',
+      productName3: productNames[2] || '',
+      productName4: productNames[3] || '',
+      productName5: productNames[4] || '',
+    }
   };
+
   try {
-    await emailAPI.sendTransacEmail(message);
+    await brevoAPI.post('/smtp/email', emailData);
     console.log(`Download email sent to: ${email}`);
   } catch (err) {
-    console.error("Brevo email error:", err.body || err.message);
+    console.error("Brevo email error:", err.response?.data || err.message);
   }
 }
 
