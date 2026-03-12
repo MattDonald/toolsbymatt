@@ -5,12 +5,13 @@ const crypto  = require("crypto");
 const brevo = require("@getbrevo/brevo");
 const app   = express();
 
-// Initialise Brevo API clients
-let apiInstance = brevo.ApiClient.instance;
-let apiKey = apiInstance.authentications['api-key'];
+// Initialise Brevo API - set API key first
+const defaultClient = brevo.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
 apiKey.apiKey = process.env.BREVO_API_KEY;
 
-const emailAPI   = new brevo.TransactionalEmailsApi();
+// Create API instances
+const emailAPI = new brevo.TransactionalEmailsApi();
 const contactAPI = new brevo.ContactsApi();
 
 // Product map: Stripe product name → array of Dropbox links
