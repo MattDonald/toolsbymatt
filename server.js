@@ -2,14 +2,16 @@ require("dotenv").config();
 const express = require("express");
 const stripe  = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const crypto  = require("crypto");
-const Brevo   = require("@getbrevo/brevo");
-const app     = express();
+const brevo = require("@getbrevo/brevo");
+const app   = express();
 
 // Initialise Brevo API clients
-const emailAPI   = new Brevo.TransactionalEmailsApi();
-const contactAPI = new Brevo.ContactsApi();
-emailAPI.authentications.apiKey.apiKey   = process.env.BREVO_API_KEY;
-contactAPI.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
+let apiInstance = brevo.ApiClient.instance;
+let apiKey = apiInstance.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+const emailAPI   = new brevo.TransactionalEmailsApi();
+const contactAPI = new brevo.ContactsApi();
 
 // Product map: Stripe product name → array of Dropbox links
 // Single products have one link in array, bundles have multiple
