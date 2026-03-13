@@ -19,9 +19,6 @@ const brevoAPI = axios.create({
 });
 
 // Product map: Stripe product name → array of Dropbox links
-// ... rest of your code
-
-// Product map: Stripe product name → array of Dropbox links
 // Single products have one link in array, bundles have multiple
 const PRODUCTS = {
   'tp7_stem_recorder': [process.env.PRODUCT_1_LINK],
