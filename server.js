@@ -9,6 +9,18 @@ const app     = express();
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BREVO_API_URL = 'https://api.brevo.com/v3';
 
+// Axios instance for Brevo API calls
+const brevoAPI = axios.create({
+  baseURL: BREVO_API_URL,
+  headers: {
+    'api-key': BREVO_API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
+
+// Product map: Stripe product name → array of Dropbox links
+// ... rest of your code
+
 // Product map: Stripe product name → array of Dropbox links
 // Single products have one link in array, bundles have multiple
 const PRODUCTS = {
