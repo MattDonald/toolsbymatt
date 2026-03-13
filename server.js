@@ -60,17 +60,11 @@ app.get("/download", (req, res) => {
   const { token } = req.query;
   const record    = tokenStore[token];
   if (!record) {
-    return res.status(404).send(`
-      <h2 style='font-family:Arial'>Link not found</h2>
-      <p style='font-family:Arial'>This link is invalid or has expired.</p>
-      <p style='font-family:Arial'>Contact store@mattdonald.com for help.</p>`);
+    return res.redirect('https://tools.mattdonald.com/download-expired');
   }
   if (Date.now() > record.expiresAt) {
     delete tokenStore[token];
-    return res.status(410).send(`
-      <h2 style='font-family:Arial'>Download link expired</h2>
-      <p style='font-family:Arial'>This link was valid for 48 hours.</p>
-      <p style='font-family:Arial'>Reply to your purchase email for a new link.</p>`);
+    return res.redirect('https://tools.mattdonald.com/download-expired');
   }
   res.redirect(record.dropboxLink);
 });
