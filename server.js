@@ -103,7 +103,11 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
     console.error("Webhook error:", err.message);
     return res.status(400).send("Webhook Error");
   }
-  if (event.type === "checkout.session.completed") {
+if (event.type === "checkout.session.completed") {
+    // Respond to Stripe immediately
+    res.json({ received: true });
+    
+    // Process webhook asynchronously
     const session     = event.data.object;
     const email       = session.customer_details?.email;
     const fullName    = session.customer_details?.name || '';
@@ -113,23 +117,24 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
     const dropboxLink = PRODUCTS[productName];
     if (!email || !dropboxLink) {
       console.warn("Could not match product:", productName);
-      return res.json({ received: true });
+      return;
     }
     // Generate one token per file (bundles will have multiple)
-const dropboxLinks = PRODUCTS[productName];
-const downloadUrls = dropboxLinks.map((link, index) => {
-  const token = createToken(link, `${productName} - File ${index + 1}`);
-  return `${process.env.RENDER_URL}/download?token=${token}`;
-});
+    const dropboxLinks = PRODUCTS[productName];
+    const downloadUrls = dropboxLinks.map((link, index) => {
+      const token = createToken(link, `${productName} - File ${index + 1}`);
+      return `${process.env.RENDER_URL}/download?token=${token}`;
+    });
 
-await Promise.all([
-  addToCustomersList(email, fullName, productName),
-  sendDownloadEmail(email, firstName, productName, downloadUrls),
-]);
+    await Promise.all([
+      addToCustomersList(email, fullName, productName),
+      sendDownloadEmail(email, firstName, productName, downloadUrls),
+    ]);
 
     console.log(`Done for ${email} — ${productName}`);
+  } else {
+    res.json({ received: true });
   }
-  res.json({ received: true });
 });
 
 // Add customer to the 'Customers' list ONLY (not Marketing Subscribers)
