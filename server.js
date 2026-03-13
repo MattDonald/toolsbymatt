@@ -68,16 +68,18 @@ app.get("/download", (req, res) => {
 
 // Form signup route: Readymag sends form data here
 app.post("/signup", express.json(), async (req, res) => {
-  const { email, firstName, lastName } = req.body;
+  const { Email } = req.body;
+  const email = Email; // Readymag capitalizes field names
+  
   if (!email) {
     return res.status(400).json({ error: "Email required" });
   }
   try {
-    await addToSignupPendingList(email, firstName || '', lastName || '');
+    await addToSignupPendingList(email);
     console.log(`Signup submitted: ${email} — pending DOI confirmation`);
     res.json({ success: true });
   } catch (err) {
-    console.error("Signup error:", err.body || err.message);
+    console.error("Signup error:", err.response?.data || err.message);
     res.status(500).json({ error: "Signup failed" });
   }
 });
@@ -163,14 +165,12 @@ async function addToCustomersList(email, fullName, productName) {
 
 // Add signup to the temporary 'Signup Pending Confirmation' list
 // Brevo automation will automatically send DOI email and move to Marketing Subscribers
-async function addToSignupPendingList(email, firstName, lastName) {
+async function addToSignupPendingList(email) {
   const contactData = {
     email: email,
     listIds: [parseInt(process.env.SIGNUP_PENDING_LIST_ID)],
     updateEnabled: false,
     attributes: {
-      FIRSTNAME: firstName,
-      LASTNAME: lastName,
       SOURCE: 'signup',
     }
   };
