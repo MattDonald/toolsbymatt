@@ -130,14 +130,15 @@ async function addToCustomersList(email, fullName, productName) {
   const firstName = nameParts[0] || '';
   const lastName  = nameParts.slice(1).join(' ') || '';
 
-    // First, check if contact exists and get their current PRODUCTS_PURCHASED
+  // First, check if contact exists and get their current PRODUCTS_PURCHASED
   let existingProducts = '';
   try {
-    const existing = await contactAPI.getContactInfo(email);
-    existingProducts = existing.body.attributes.PRODUCTS_PURCHASED || '';
+    const response = await brevoAPI.get(`/contacts/${encodeURIComponent(email)}`);
+    existingProducts = response.data.attributes.PRODUCTS_PURCHASED || '';
   } catch (err) {
     // Contact doesn't exist yet, that's fine
   }
+
   // Build the new products list: append new product if not already present
   let updatedProducts = existingProducts;
   if (!existingProducts) {
@@ -145,21 +146,24 @@ async function addToCustomersList(email, fullName, productName) {
   } else if (!existingProducts.includes(productName)) {
     updatedProducts = existingProducts + ', ' + productName;
   }
-  const contact   = new Brevo.CreateContact();
-  contact.email         = email;
-  contact.listIds       = [parseInt(process.env.CUSTOMERS_LIST_ID)];
-  contact.updateEnabled = true;
-  contact.attributes    = {
-    FIRSTNAME: firstName,
-    LASTNAME:  lastName,
-    PRODUCTS_PURCHASED: updatedProducts,
-    SOURCE: 'purchase',
+
+  const contactData = {
+    email: email,
+    listIds: [parseInt(process.env.CUSTOMERS_LIST_ID)],
+    updateEnabled: true,
+    attributes: {
+      FIRSTNAME: firstName,
+      LASTNAME: lastName,
+      PRODUCTS_PURCHASED: updatedProducts,
+      SOURCE: 'purchase',
+    }
   };
+
   try {
-    await contactAPI.createContact(contact);
+    await brevoAPI.post('/contacts', contactData);
     console.log(`Added to Customers list: ${email} — Products: ${updatedProducts}`);
   } catch (err) {
-    console.error("Brevo contact error:", err.body || err.message);
+    console.error("Brevo contact error:", err.response?.data || err.message);
   }
 }
 
