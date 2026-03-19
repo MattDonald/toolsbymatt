@@ -70,16 +70,18 @@ app.get("/download", (req, res) => {
 });
 
 // Form signup route: Readymag sends form data here
-app.post("/signup", express.json(), async (req, res) => {
-  const { Email } = req.body;
-  const email = Email; // Readymag capitalizes field names
+app.post("/signup", express.urlencoded({ extended: true }), express.json(), async (req, res) => {
+  console.log("Signup request body:", req.body);
+  const { Email, email } = req.body;
+  const emailAddress = Email || email; // Try both capitalizations
   
-  if (!email) {
+  if (!emailAddress) {
+    console.error("No email found in request:", req.body);
     return res.status(400).json({ error: "Email required" });
   }
   try {
-    await addToSignupPendingList(email);
-    console.log(`Signup submitted: ${email} — pending DOI confirmation`);
+    await addToSignupPendingList(emailAddress);
+    console.log(`Signup submitted: ${emailAddress} — pending DOI confirmation`);
     res.json({ success: true });
   } catch (err) {
     console.error("Signup error:", err.response?.data || err.message);
