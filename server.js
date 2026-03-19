@@ -72,13 +72,23 @@ app.get("/download", (req, res) => {
 // Form signup route: Readymag sends form data here
 app.post("/signup", express.urlencoded({ extended: true }), express.json(), async (req, res) => {
   console.log("Signup request body:", req.body);
-  const { Email, email } = req.body;
-  const emailAddress = Email || email; // Try both capitalizations
+  
+  // Readymag sends data in a weird nested format
+  let emailAddress;
+  
+  // Try standard formats first
+  emailAddress = req.body.Email || req.body.email;
+  
+  // Try Readymag's nested format
+  if (!emailAddress && req.body['0']) {
+    emailAddress = req.body['0'].email || req.body['0'].Email;
+  }
   
   if (!emailAddress) {
     console.error("No email found in request:", req.body);
     return res.status(400).json({ error: "Email required" });
   }
+  
   try {
     await addToSignupPendingList(emailAddress);
     console.log(`Signup submitted: ${emailAddress} — pending DOI confirmation`);
