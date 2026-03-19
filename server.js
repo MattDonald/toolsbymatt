@@ -97,11 +97,8 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
     console.error("Webhook error:", err.message);
     return res.status(400).send("Webhook Error");
   }
-if (event.type === "checkout.session.completed") {
-    // Respond to Stripe immediately
-    res.json({ received: true });
-    
-    // Process webhook asynchronously
+  
+  if (event.type === "checkout.session.completed") {
     const session     = event.data.object;
     const email       = session.customer_details?.email;
     const fullName    = session.customer_details?.name || '';
@@ -109,10 +106,12 @@ if (event.type === "checkout.session.completed") {
     const lineItems   = await stripe.checkout.sessions.listLineItems(session.id);
     const productName = lineItems.data[0]?.description;
     const dropboxLink = PRODUCTS[productName];
+    
     if (!email || !dropboxLink) {
       console.warn("Could not match product:", productName);
-      return;
+      return res.json({ received: true });
     }
+    
     // Generate one token per file (bundles will have multiple)
     const dropboxLinks = PRODUCTS[productName];
     const downloadUrls = dropboxLinks.map((link, index) => {
@@ -120,6 +119,10 @@ if (event.type === "checkout.session.completed") {
       return `${process.env.RENDER_URL}/download?token=${token}`;
     });
 
+    // Respond to Stripe BEFORE doing slow operations
+    res.json({ received: true });
+
+    // Process asynchronously after response sent
     await Promise.all([
       addToCustomersList(email, fullName, productName),
       sendDownloadEmail(email, firstName, productName, downloadUrls),
