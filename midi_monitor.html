@@ -1,0 +1,596 @@
+<style>
+  #midiMonitor * { box-sizing: border-box; margin: 0; padding: 0; }
+  #midiMonitor { display: flex; flex-direction: column; align-items: center; background: transparent; padding-bottom: 40px; width: 100%; }
+  #midiMonitor h2, #midiMonitor .field-value { color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; text-align: center; font-size: 50px; font-weight: 500; line-height: 50px; }
+  #midiMonitor p, #midiMonitor .mono, #midiMonitor #statusLabe, #midiMonitor .field-label, #midiMonitor #filterTitle, #midiMonitor #typeFilterTitle, #midiMonitor .log-entry, #midiMonitor #logColHeadings, #midiMonitor .log-placeholder, #noMidi p { color: rgba(252, 111, 47, 1); font-family: JetBrains Mono; font-style: italic; text-align: left; font-size: 12px; font-weight: 400; line-height: 20px; font-variation-settings: 'wght' 600; }
+  #midiMonitor #mainContent { width: 100%; max-width: 482px; padding: 0 16px; }
+  #midiMonitor #topRow { margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #midiMonitor #deviceSelect { background: transparent; border: none; border-bottom: 1px solid #FC6F2F; color: #FC6F2F; font-family: custom_175773; font-weight: 500; font-size: 18px; line-height: 18px; width: 100%; outline: none; text-align: center; cursor: pointer; padding: 4px 0; appearance: none; -webkit-appearance: none; }
+  #midiMonitor #deviceSelect option { background: none; color: #FC6F2F; }
+  #midiMonitor #clockWrap { margin-top: 20px; width: 100%; display: flex; flex-direction: column; border-bottom: 1px solid rgba(252,111,47,0.5); padding-bottom: 12px; }
+  #midiMonitor #fields { margin-top: 20px; width: 100%; display: flex; flex-direction: column; }
+  #midiMonitor .field { display: flex; align-items: baseline; gap: 12px; padding: 3px 0; }
+  #midiMonitor .field.hidden { display: none; }
+  #midiMonitor .field-label { flex-shrink: 0; min-width: 210px; text-align: right; }
+  #midiMonitor .field-value { word-break: break-all; }
+  #midiMonitor .field-value.empty { display: none; }
+  #midiMonitor .bar-track { display: none; }
+  #midiMonitor .bar-fill { display: none; }
+  #midiMonitor #filterWrap, #midiMonitor #typeFilterWrap { margin-top: 20px; width: 100%; }
+  #midiMonitor #filterTitle, #midiMonitor #typeFilterTitle { margin-bottom: 6px; }
+  #midiMonitor #filterPills { display: flex; flex-wrap: wrap; gap: 5px; }
+  #midiMonitor .pill { font-family: custom_175773; font-weight: 500; font-size: 18px; line-height: 1; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 18px 11px 18px !important; cursor: pointer; user-select: none; }
+  #midiMonitor .pill.active { background: #FC6F2F; color: #FFEBD2; }
+  #midiMonitor .pill:not(.active) { background: #FFEBD2; color: #FC6F2F; }
+  #midiMonitor #typeFilterPills { display: flex; flex-wrap: wrap; gap: 5px; }
+  #midiMonitor #logWrap { margin-top: 20px; width: 100%; border-top: 1px solid #FC6F2F; }
+  #midiMonitor #logHeader { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0 4px; border-bottom: 1px solid rgba(252,111,47,0.5); margin-bottom: 2px; }
+  #midiMonitor #logColHeadings { display: grid; grid-template-columns: 70px 70px 1fr 1fr; gap: 10px; padding: 4px 0 3px; border-bottom: 1px solid rgba(252,111,47,0.25); margin-bottom: 1px; }
+  #midiMonitor #logList { list-style: none; max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(252,111,47,0.3) transparent; }
+  #midiMonitor #logList::-webkit-scrollbar { width: 3px; }
+  #midiMonitor #logList::-webkit-scrollbar-thumb { background: rgba(252,111,47,0.3); }
+  #midiMonitor .log-entry { display: grid; grid-template-columns: 70px 70px 1fr 1fr; gap: 10px; padding: 3px 0; border-bottom: 1px solid rgba(252,111,47,0.08); animation: midiMonitorFadeIn 0.1s ease; }
+  #midiMonitor .log-entry .lch { font-family: custom_175773; font-style: normal; font-size: 11px; color: #FC6F2F; }
+  #midiMonitor .log-placeholder { padding: 12px 0; text-align: center; }
+  #midiMonitor #btnRow { margin-top: 16px; display: flex; gap: 8px; justify-content: center; }
+  #midiMonitor .action-btn { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 11px 28px !important; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; transition: background 0s, color 0s; }
+  #midiMonitor .action-btn:hover { background: #FFEBD2; color: #FC6F2F; }
+  #midiMonitor #noMidi p { margin-top: 24px; text-align: center; }
+  @keyframes midiMonitorFadeIn { from { opacity: 0; } to   { opacity: 1; } }
+</style>
+<div id="midiMonitor">
+
+  <p id="statusLabel">requesting access…</p>
+  <div id="mpeToggleWrap" style="margin:30px;">
+    <div class="pill" id="mpeToggle" onclick="toggleMPE()">mpe</div>
+  </div>
+
+  <div id="mainContent">
+
+    <!-- DEVICE -->
+    <div id="topRow">
+      <select id="deviceSelect">
+        <option value="">no inputs found</option>
+      </select>
+    </div>
+
+    <!-- CLOCK DISPLAY -->
+    <div id="clockWrap">
+      <div class="field" id="rowClock">
+        <div class="field-label">clock</div>
+        <div class="field-value" id="clockState">–</div>
+      </div>
+      <div class="field" id="rowBpm">
+        <div class="field-label">bpm</div>
+        <div class="field-value" id="clockBpm">–</div>
+      </div>
+    </div>
+
+    <!-- LIVE FIELDS -->
+    <div id="fields">
+      <div class="field hidden" id="rowChannel">
+        <div class="field-label">ch</div>
+        <div class="field-value empty" id="fChannel"></div>
+      </div>
+      <div class="field hidden" id="rowType">
+        <div class="field-label">type</div>
+        <div class="field-value empty" id="fType"></div>
+      </div>
+      <div class="field hidden" id="rowData1">
+        <div class="field-label" id="labelData1">cc #</div>
+        <div class="field-value empty" id="fData1"></div>
+      </div>
+      <div class="field hidden" id="rowData2">
+        <div class="field-label" id="labelData2">value</div>
+        <div class="field-value empty" id="fData2"></div>
+        <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+      </div>
+    </div>
+
+    <!-- CHANNEL FILTER -->
+    <div id="filterWrap">
+      <div id="filterTitle">filter by channel</div>
+      <div id="filterPills"></div>
+    </div>
+
+    <!-- TYPE FILTER -->
+    <div id="typeFilterWrap">
+      <div id="typeFilterTitle">filter by type</div>
+      <div id="typeFilterPills"></div>
+    </div>
+
+    <!-- LOG -->
+    <div id="logWrap">
+      <div id="logHeader">
+        <span class="mono">message log</span>
+        <span class="mono" id="msgCount">0 messages</span>
+      </div>
+      <div id="logColHeadings">
+        <span>time</span>
+        <span>ch</span>
+        <span>type</span>
+        <span>val</span>
+      </div>
+      <ul id="logList">
+        <li class="log-placeholder">awaiting midi input…</li>
+      </ul>
+    </div>
+
+    <!-- BUTTONS -->
+    <div id="btnRow">
+      <button class="action-btn" onclick="refreshDevices()">refresh</button>
+      <button class="action-btn" onclick="clearLog()">clear</button>
+    </div>
+
+  </div>
+
+  <div id="noMidi" style="display:none">
+    <h2 id="noMidiHeading">try a different browser</h2>
+    <p id="noMidiBody">your browser doesn't support web midi, try again on chrome, edge, or opera.</p>
+  </div>
+
+</div><!-- /#midiMonitor -->
+<script>
+  let midiAccess = null, activeInput = null, msgCount = 0;
+  const ALL_TYPES = ['note','poly aftertouch','cc','14-bit cc','prog change','aftertouch','pitch bend','clock'];
+  const MPE_TYPES = ['mpe pressure','mpe pitch bend','mpe slide','mpe rel vel'];
+  let mpeMode = false;
+  let selectedChannels = new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+  let selectedTypes = new Set(ALL_TYPES); // MPE_TYPES not selected by default
+  const MAX_LOG = 100, log = [];
+  let sessionStart = Date.now();
+  const ccMSB = new Array(128).fill(null);
+  const ccPending = new Array(32).fill(false);
+  // Per-channel bank select state — 16 channels, holds {msb, lsb, logIdx}
+  const bankState = Array.from({length: 17}, () => ({msb: null, lsb: null, logIdx: null}));
+
+  // ── CLOCK STATE
+  let clockTicks = 0, clockRunning = false;
+  let lastTickTime = null, tickTimes = [];
+  const TICK_WINDOW = 24;
+
+  // ── INIT
+  // Build UI immediately so it renders without waiting for MIDI permission
+  buildPills();
+  buildTypePills();
+
+  if (!navigator.requestMIDIAccess) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    document.getElementById('noMidiHeading').textContent = isIOS ? 'get your laptop' : 'try a different browser';
+    document.getElementById('noMidiBody').textContent = isIOS
+      ? 'iOS doesn\'t support web midi, so you need your computer.'
+      : 'your browser doesn\'t support web midi, try again on chrome, edge, or opera.';
+    document.getElementById('noMidi').style.display = 'block';
+    document.getElementById('mainContent').style.display = 'none';
+    setStatus('not listening yet');
+  } else {
+    // Request MIDI access in background — UI already visible
+    navigator.requestMIDIAccess({ sysex: false }).then(access => {
+      midiAccess = access;
+      setStatus('connected');
+      refreshDevices();
+      midiAccess.onstatechange = () => refreshDevices();
+    }).catch(() => setStatus('access denied'));
+  }
+
+  function setStatus(t) { document.getElementById('statusLabel').textContent = t; }
+
+  // ── DEVICES
+  function refreshDevices() {
+    if (!midiAccess) return;
+    const sel = document.getElementById('deviceSelect');
+    const prev = sel.value;
+    sel.innerHTML = '';
+    const inputs = [...midiAccess.inputs.values()];
+    if (!inputs.length) {
+      sel.innerHTML = '<option value="">no inputs found</option>';
+      setActiveInput(null); return;
+    }
+    inputs.forEach(inp => {
+      const o = document.createElement('option');
+      o.value = inp.id; o.textContent = inp.name;
+      sel.appendChild(o);
+    });
+    const match = inputs.find(i => i.id === prev);
+    sel.value = match ? match.id : inputs[0].id;
+    onDeviceChange();
+  }
+
+  function onDeviceChange() {
+    const id = document.getElementById('deviceSelect').value;
+    if (activeInput) activeInput.onmidimessage = null;
+    if (!id) { setActiveInput(null); return; }
+    const inp = midiAccess.inputs.get(id);
+    if (inp) { inp.onmidimessage = onMIDI; setActiveInput(inp); }
+  }
+
+  document.getElementById('deviceSelect').addEventListener('change', onDeviceChange);
+
+  function setActiveInput(inp) {
+    activeInput = inp;
+    setStatus(inp ? 'listening' : 'connected');
+  }
+
+  // ── MIDI
+  const NOTE_NAMES = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b'];
+  function noteName(n) { return NOTE_NAMES[n % 12] + (Math.floor(n / 12) - 1); }
+
+  function onMIDI(e) {
+    const [status, d1, d2 = 0] = e.data;
+    const type = status & 0xF0, ch = (status & 0x0F) + 1;
+
+    let msgType='', data1='', data2='', logVal='', value=null;
+    switch(type) {
+      case 0x90:
+        if(d2>0){
+          msgType='note'; data1=`${noteName(d1)} (${d1})`; data2=`${d2}`; value=d2;
+          logVal=`${noteName(d1)} ${d1}  ${d2}`;
+        } else {
+          msgType='note'; data1=`${noteName(d1)} (${d1})`; data2=`0`; value=0;
+          logVal=`${noteName(d1)} ${d1}  0`;
+        }
+        break;
+      case 0x80:
+        if(mpeMode && ch > 1){
+          msgType='mpe rel vel'; data1=`${noteName(d1)} (${d1})`; data2=`${d2}`; value=d2;
+          logVal=`${noteName(d1)} ${d1}  ${d2}`;
+        } else {
+          msgType='note'; data1=`${noteName(d1)} (${d1})`; data2=`0`; value=0;
+          logVal=`${noteName(d1)} ${d1}  0`;
+        }
+        break;
+      case 0xA0:
+        if(mpeMode && ch > 1){
+          msgType='mpe pressure'; data1=`${noteName(d1)} (${d1})`; data2=`${d2}`; value=d2;
+          logVal=`${noteName(d1)} ${d1}  ${d2}`;
+        } else {
+          msgType='poly aftertouch'; data1=`${noteName(d1)} (${d1})`; data2=`${d2}`; value=d2;
+          logVal=`${noteName(d1)} ${d1}  ${d2}`;
+        }
+        break;
+      case 0xB0:
+        if(d1<32){
+          ccMSB[d1]=d2; ccPending[d1]=true;
+          msgType='cc'; data1=`${d1}`; data2=`${d2}`; value=d2;
+          logVal=`${d1}  ${d2}`;
+          // Track bank select MSB (CC 0) per channel
+          if(d1===0) bankState[ch].msb=d2;
+        } else if(d1>=32&&d1<64&&ccPending[d1-32]){
+          const msb=ccMSB[d1-32], lsb=d2, val14=(msb<<7)|lsb;
+          ccPending[d1-32]=false;
+          msgType='14-bit cc';
+          data1=`${d1-32} + ${d1}`; data2=`${val14}`; value=msb;
+          logVal=`${val14} - ${d1-32} ${msb} / ${d1} ${lsb}`;
+          // Track bank select LSB (CC 32) per channel
+          if(d1===32) bankState[ch].lsb=d2;
+          if(log.length && log[0].type==='cc' && log[0].ch===ch && log[0]._ccNum===d1-32){
+            log.shift();
+          }
+        } else {
+          msgType='cc'; data1=`${d1}`; data2=`${d2}`; value=d2;
+          logVal=`${d1}  ${d2}`;
+          // Track bank select LSB (CC 32) when sent as plain CC
+          if(d1===32) bankState[ch].lsb=d2;
+          // MPE slide is CC 74 on note channels
+          if(mpeMode && ch > 1 && d1===74){
+            msgType='mpe slide'; data1=''; data2=`${d2}`; value=d2;
+            logVal=`${d2}`;
+          }
+        }
+        break;
+      case 0xC0: {
+        const bank = bankState[ch];
+        const hasBank = bank.msb !== null || bank.lsb !== null;
+        const bankMsb = bank.msb !== null ? bank.msb : 0;
+        const bankLsb = bank.lsb !== null ? bank.lsb : 0;
+        msgType='prog change';
+        data1=`${d1}`; data2=''; value=d1;
+        if(hasBank){
+          logVal=`bank ${bankMsb} / sub ${bankLsb} / pgm ${d1}`;
+          // Remove bank select log entries tagged to this channel
+          for(let i=log.length-1; i>=0; i--){
+            if(log[i]._bankCh===ch) log.splice(i,1);
+          }
+          bankState[ch].msb=null; bankState[ch].lsb=null;
+        } else {
+          logVal=`${d1}`;
+        }
+        break;
+      }
+      case 0xD0:
+        if(mpeMode && ch > 1){
+          msgType='mpe pressure'; data1=''; data2=`${d1}`; value=d1;
+          logVal=`${d1}`;
+        } else {
+          msgType='aftertouch'; data1=''; data2=`${d1}`; value=d1;
+          logVal=`${d1}`;
+        }
+        break;
+      case 0xE0: {
+        const lsb=d1, msb=d2, val14=((msb<<7)|lsb);
+        if(mpeMode && ch > 1){
+          msgType='mpe pitch bend';
+        } else {
+          msgType='pitch bend';
+        }
+        data1=''; data2=`${val14}`; value=msb;
+        logVal=`${val14}`;
+        break;
+      }
+      default:
+        switch(status) {
+          case 0xF8: // Clock tick
+            onClockTick(e.timeStamp);
+            return;
+          case 0xFA: // Start
+            clockRunning=true; clockTicks=0; tickTimes=[];
+            if (selectedTypes.has('clock')) {
+              updateClockDisplay(null, 'playing');
+              addLog('—', 'clock', 'start', null); msgCount++;
+              document.getElementById('msgCount').textContent = `${msgCount} message${msgCount===1?'':'s'}`;
+            }
+            return;
+          case 0xFB: // Continue
+            clockRunning=true;
+            if (selectedTypes.has('clock')) {
+              updateClockDisplay(null, 'playing');
+              addLog('—', 'clock', 'continue', null); msgCount++;
+              document.getElementById('msgCount').textContent = `${msgCount} message${msgCount===1?'':'s'}`;
+            }
+            return;
+          case 0xFC: // Stop
+            clockRunning=false;
+            if (selectedTypes.has('clock')) {
+              updateClockDisplay(null, 'stopped');
+              addLog('—', 'clock', 'stop', null); msgCount++;
+              document.getElementById('msgCount').textContent = `${msgCount} message${msgCount===1?'':'s'}`;
+            }
+            return;
+          case 0xFE: // Active sensing — ignore
+            return;
+          case 0xFF: // System reset
+            clockRunning=false; clockTicks=0; tickTimes=[]; lastTickTime=null;
+            if (selectedTypes.has('clock')) {
+              updateClockDisplay(null, 'stopped');
+              addLog('—', 'clock', 'reset', null); msgCount++;
+              document.getElementById('msgCount').textContent = `${msgCount} message${msgCount===1?'':'s'}`;
+            }
+            return;
+          case 0xF2: { // Song Position Pointer — gated by clock filter
+            if (selectedTypes.has('clock')) {
+              const spp = (d2 << 7) | d1;
+              addLog('—', 'song position', `${spp} beats`, null); msgCount++;
+              document.getElementById('msgCount').textContent = `${msgCount} message${msgCount===1?'':'s'}`;
+            }
+            return;
+          }
+          default:
+            msgType=`0x${status.toString(16)}`; data1=''; data2=''; logVal='';
+        }
+    }
+
+    // Type & channel filters
+    if (!selectedTypes.has(msgType)) return;
+    if (!selectedChannels.has(ch)) return;
+
+    updateFields(ch, msgType, data1, data2, value);
+    const isBankCC = (type & 0xF0)===0xB0 && (d1===0 || d1===32);
+    addLog(ch, msgType, logVal, d1 < 32 && (type & 0xF0) === 0xB0 ? d1 : null, isBankCC ? ch : null);
+    msgCount++;
+    document.getElementById('msgCount').textContent = `${msgCount} message${msgCount===1?'':'s'}`;
+  }
+
+  // ── FIELDS
+  function updateFields(ch, type, d1, d2, value) {
+    const label1 = document.getElementById('labelData1');
+    const label2 = document.getElementById('labelData2');
+
+    if (type === 'pitch bend') {
+      label1.textContent = ''; label2.textContent = 'value';
+    } else if (type === '14-bit cc') {
+      label1.textContent = 'cc #'; label2.textContent = 'value';
+    } else if (type === 'cc') {
+      label1.textContent = 'cc #'; label2.textContent = 'value';
+    } else if (type === 'note') {
+      label1.textContent = 'note'; label2.textContent = 'vel';
+    } else if (type === 'poly aftertouch') {
+      label1.textContent = 'note'; label2.textContent = 'pressure';
+    } else if (type === 'prog change') {
+      label1.textContent = 'pc'; label2.textContent = '';
+    } else if (type === 'aftertouch') {
+      label1.textContent = ''; label2.textContent = 'aftertouch';
+    } else if (type === 'mpe pressure') {
+      label1.textContent = 'note'; label2.textContent = 'pressure';
+    } else if (type === 'mpe pitch bend') {
+      label1.textContent = ''; label2.textContent = 'pitch bend';
+    } else if (type === 'mpe slide') {
+      label1.textContent = ''; label2.textContent = 'slide';
+    } else if (type === 'mpe rel vel') {
+      label1.textContent = 'note'; label2.textContent = 'rel vel';
+    } else {
+      label1.textContent = 'data'; label2.textContent = 'value';
+    }
+
+    const setRow = (rowId, valId, val) => {
+      const el = document.getElementById(valId);
+      const row = document.getElementById(rowId);
+      if (val) {
+        el.textContent = val;
+        el.className = 'field-value';
+        row.classList.remove('hidden');
+      } else {
+        el.textContent = '';
+        el.className = 'field-value empty';
+        row.classList.add('hidden');
+      }
+    };
+
+    setRow('rowChannel', 'fChannel', `ch ${ch}`);
+    setRow('rowType',    'fType',    type);
+    setRow('rowData1',   'fData1',   d1);
+    setRow('rowData2',   'fData2',   d2);
+  }
+
+  // ── CLOCK
+  function onClockTick(ts) {
+    clockTicks++;
+    if (lastTickTime !== null) {
+      tickTimes.push(ts - lastTickTime);
+      if (tickTimes.length > TICK_WINDOW) tickTimes.shift();
+      if (tickTimes.length >= 2) {
+        const avg = tickTimes.reduce((a,b)=>a+b,0) / tickTimes.length;
+        const bpm = 60000 / (avg * 24);
+        updateClockDisplay(bpm, clockRunning ? 'playing' : null);
+      }
+    }
+    lastTickTime = ts;
+  }
+
+  function updateClockDisplay(bpm, state) {
+    if (bpm !== null) document.getElementById('clockBpm').textContent = bpm.toFixed(1);
+    if (state) {
+      document.getElementById('clockState').textContent = state;
+      if (state === 'stopped') document.getElementById('clockBpm').textContent = '–';
+    }
+  }
+
+  function addLog(ch, type, logVal, ccNum, bankCh=null) {
+    const elapsed = Date.now() - sessionStart;
+    const mins = Math.floor(elapsed / 60000);
+    const secs = Math.floor((elapsed % 60000) / 1000);
+    const cents = Math.floor((elapsed % 1000) / 10);
+    const ts = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}.${cents.toString().padStart(2,'0')}`;
+    log.unshift({ts, ch, type, logVal, _ccNum: ccNum, _bankCh: bankCh});
+    if(log.length > MAX_LOG) log.pop();
+    renderLog();
+  }
+
+  function renderLog() {
+    const ul = document.getElementById('logList');
+    ul.innerHTML = '';
+    if(!log.length){ul.innerHTML='<li class="log-placeholder">awaiting midi input…</li>';return;}
+    log.forEach(m => {
+      const li = document.createElement('li');
+      li.className = 'log-entry';
+      li.innerHTML =
+        `<span>${m.ts}</span>` +
+        `<span class="lch">${m.ch}</span>` +
+        `<span>${m.type}</span>` +
+        `<span>${m.logVal||''}</span>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function clearLog() {
+    log.length=0; msgCount=0; sessionStart=Date.now();
+    renderLog();
+    document.getElementById('msgCount').textContent='0 messages';
+    ['rowChannel','rowType','rowData1','rowData2'].forEach(id =>
+      document.getElementById(id).classList.add('hidden'));
+    ['fChannel','fType','fData1','fData2'].forEach(id => {
+      const el=document.getElementById(id); el.textContent=''; el.className='field-value empty';
+    });
+  }
+
+  // ── MPE TOGGLE
+  function toggleMPE() {
+    mpeMode = !mpeMode;
+    document.getElementById('mpeToggle').className = 'pill' + (mpeMode ? ' active' : '');
+
+    const mpeWrap = document.getElementById('mpePillsWrap');
+    const polyPill = document.getElementById('tpill-poly aftertouch');
+    mpeWrap.style.display = mpeMode ? 'flex' : 'none';
+    if(polyPill) polyPill.style.display = mpeMode ? 'none' : '';
+
+    if(mpeMode){
+      // Auto-select all MPE types, deselect poly aftertouch
+      MPE_TYPES.forEach(t => selectedTypes.add(t));
+      selectedTypes.delete('poly aftertouch');
+    } else {
+      // Auto-deselect MPE types, restore poly aftertouch
+      MPE_TYPES.forEach(t => selectedTypes.delete(t));
+      selectedTypes.add('poly aftertouch');
+    }
+    updateTypePills();
+  }
+
+  // ── CHANNEL PILLS
+  function buildPills() {
+    const wrap = document.getElementById('filterPills');
+    for(let i=1; i<=16; i++){
+      const p = document.createElement('div');
+      p.className = 'pill active';
+      p.textContent = i;
+      p.id = `pill-${i}`;
+      p.onclick = () => {
+        if (selectedChannels.has(i)) {
+          if (selectedChannels.size === 1) return;
+          selectedChannels.delete(i);
+        } else {
+          selectedChannels.add(i);
+        }
+        updatePills();
+      };
+      wrap.appendChild(p);
+    }
+  }
+
+  function updatePills() {
+    for(let i=1; i<=16; i++)
+      document.getElementById(`pill-${i}`).className = 'pill' + (selectedChannels.has(i) ? ' active' : '');
+  }
+
+  // ── TYPE PILLS
+  function buildTypePills() {
+    const wrap = document.getElementById('typeFilterPills');
+    ALL_TYPES.forEach(t => {
+      const p = document.createElement('div');
+      p.className = 'pill active';
+      p.textContent = t;
+      p.id = `tpill-${t}`;
+      p.onclick = () => {
+        if (selectedTypes.has(t)) {
+          if (selectedTypes.size === 1) return;
+          selectedTypes.delete(t);
+        } else {
+          selectedTypes.add(t);
+        }
+        updateTypePills();
+      };
+      wrap.appendChild(p);
+    });
+
+    // MPE pills — in a separate wrap, hidden until MPE mode on
+    const mpeWrap = document.createElement('div');
+    mpeWrap.id = 'mpePillsWrap';
+    mpeWrap.style.cssText = 'display:none; flex-wrap:wrap; gap:5px; margin-top:5px;';
+    MPE_TYPES.forEach(t => {
+      const p = document.createElement('div');
+      p.className = 'pill active';
+      p.textContent = t;
+      p.id = `tpill-${t}`;
+      p.onclick = () => {
+        if (selectedTypes.has(t)) {
+          if (selectedTypes.size === 1) return;
+          selectedTypes.delete(t);
+        } else {
+          selectedTypes.add(t);
+        }
+        updateTypePills();
+      };
+      mpeWrap.appendChild(p);
+    });
+    wrap.parentElement.appendChild(mpeWrap);
+  }
+
+  function updateTypePills() {
+    ALL_TYPES.forEach(t => {
+      const el = document.getElementById(`tpill-${t}`);
+      if(el) el.className = 'pill' + (selectedTypes.has(t) ? ' active' : '');
+    });
+    MPE_TYPES.forEach(t => {
+      const el = document.getElementById(`tpill-${t}`);
+      if(el) el.className = 'pill' + (selectedTypes.has(t) ? ' active' : '');
+    });
+  }
+</script>
