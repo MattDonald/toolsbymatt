@@ -8,7 +8,7 @@
   #epRemapper tr:last-child td { border-bottom: none; }
   #epRemapper tr.empty { color: #aaa; }
   #epRemapper input[type="number"] { background: #FC6F2F; border: none; width: 100%; border-radius: 100px; text-align: center !important; color: #FFEBD2 !important; }
-  #epRemapper input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #epRemapper input::-webkit-outer-spin-button, #epRemapper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   #epRemapper #bulk-offset { background: transparent; border: none; color: #FC6F2F !important; font-family: custom_175773; font-style: normal; font-size: 50px; font-weight: 500; width: auto; min-width: 60px; outline: none; text-align: right; -moz-appearance: textfield; appearance: textfield; }
   #epRemapper #drop-zone { border: 2px dashed #FC6F2F; padding: 70px; text-align: center; cursor: pointer; }
   #epRemapper #drop-zone.loaded { padding: 12px 20px; }
@@ -176,9 +176,7 @@ function renderAll() {
 
   // File name section
   const metaName = document.createElement('h2');
-  metaName.innerHTML = `
-    file: ${state.filename}
-  `;
+  metaName.textContent = state.filename;
   sections.appendChild(metaName);
 
   // Meta section
@@ -508,11 +506,4 @@ function buildTar(entries) {
   return out;
 }
 
-function encodeString(str, length) {
-  const out = new Uint8Array(length);
-  for (let i = 0; i < Math.min(str.length, length); i++) {
-    out[i] = str.charCodeAt(i);
-  }
-  return out;
-}
 </script>
