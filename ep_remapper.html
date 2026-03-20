@@ -176,6 +176,478 @@ function renderAll() {
 
   // File name section
   const metaName = document.createElement('h2');
+  metaName.textContent = "file: " + state.filename;
+  sections.appendChild(metaName);
+
+  // Meta section
+  const metaSec = document.createElement('section');
+  metaSec.innerHTML = `
+    <p>Original Project Location: ${state.projectName} <br />Device: ${state.meta.device_name || '?'}<br />Firmware: ${state.meta.device_version || '?'}</p>
+    <p class='assigned'>pads assigned samples: ${state.assignments.length}<br />samples used in scenes: ${state.assignments.filter(a=>a.usedInScene).length}</p>
+  `;
+  sections.appendChild(metaSec);
+
+  // Slot map section
+  const mapSec = document.createElement('section');
+  mapSec.innerHTML = '<h2 style="text-align: left; margin: 0;">sample slots</h2>';
+
+  const table = document.createElement('table');
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>group</th>
+        <th>pad</th>
+        <th>current</th>
+        <th>name</th>
+        <th>used?</th>
+        <th>new slot</th>
+      </tr>
+    </thead>
+  `;
+  const tbody = document.createElement('tbody');
+
+  for (let i = 0; i < state.assignments.length; i++) {
+    const a = state.assignments[i];
+    const tr = document.createElement('tr');
+    tr.className = a.usedInScene ? 'used' : 'assigned';
+    tr.dataset.idx = i;
+    tr.innerHTML = `
+      <td>${a.group}</td>
+      <td>${a.label}</td>
+      <td>${a.originalSlot}</td>
+      <td>${a.soundName}</td>
+      <td>${a.usedInScene ? '&#128077;' : '&#128078;'}</td>
+      <td>
+        <div class="slot-input">
+          <input type="number" min="1" max="999" value="${a.newSlot}" data-idx="${i}" class="new-slot-input">
+          <span class="slot-status" data-idx="${i}"></span>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'table-wrap';
+  tableWrap.appendChild(table);
+  mapSec.appendChild(tableWrap);
+  // Bulk offset tool
+  const bulkDiv = document.createElement('div');
+  bulkDiv.innerHTML = `
+    <button onclick="applyBulkOffset()">offset all</button>
+    <input type="number" id="bulk-offset" value="0" style="width:80px">
+    <button onclick="resetSlots()" style="display:block;margin-top:10px;">reset</button>
+  `;
+  mapSec.appendChild(bulkDiv);
+
+  // Validation
+  const valDiv = document.createElement('div');
+  valDiv.id = 'validation-msg';
+  mapSec.appendChild(valDiv);
+
+  sections.appendChild(mapSec);
+  // Export section
+  const exportSec = document.createElement('section');
+  const exportBtn = document.createElement('button');
+  exportSec.className = 'export';
+  exportBtn.id = 'export-btn';
+  exportBtn.className = 'primary';
+  exportBtn.textContent = 'remap';
+  exportBtn.onclick = exportPpak;
+  exportSec.appendChild(exportBtn);
+  sections.appendChild(exportSec);
+
+  // Wire up inputs
+  document.querySelectorAll('.new-slot-input').forEach(input => {
+    input.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.idx);
+      state.assignments[idx].newSlot = parseInt(e.target.value) || 0;
+      validateSlots();
+    });
+  });
+
+  validateSlots();
+}
+
+function validateSlots() {
+  const slotCounts = {};
+  for (const a of state.assignments) {
+    if (!a.newSlot) continue;
+    slotCounts[a.newSlot] = (slotCounts[a.newSlot] || 0) + 1;
+  }
+
+  let hasErrors = false;
+  const inputs = document.querySelectorAll('.new-slot-input');
+  inputs.forEach(input => {
+    const idx = parseInt(input.dataset.idx);
+    const a = state.assignments[idx];
+    const tr = input.closest('tr');
+    const status = document.querySelector(`.slot-status[data-idx="${idx}"]`);
+    const slot = a.newSlot;
+    let msg = '';
+    let conflict = false;
+
+    if (!slot || slot < 1 || slot > 999) {
+      conflict = true;
+    } else if (slotCounts[slot] > 1) {
+      conflict = true;
+    }
+
+    tr.classList.toggle('conflict', conflict);
+    status.textContent = msg;
+    if (conflict) hasErrors = true;
+  });
+
+  const valDiv = document.getElementById('validation-msg');
+  const exportBtn = document.getElementById('export-btn');
+  if (hasErrors) {
+    valDiv.innerHTML = '<h3 class="error">Each sample must have a unique slot number between 1&#45;999.</h3>';
+    if (exportBtn) exportBtn.disabled = true;
+  } else {
+    valDiv.innerHTML = '';
+    if (exportBtn) exportBtn.disabled = false;
+  }
+
+  return !hasErrors;
+}
+
+function applyBulkOffset() {
+  const offset = parseInt(document.getElementById('bulk-offset').value) || 0;
+  state.assignments.forEach((a, i) => {
+    a.newSlot = Math.max(1, Math.min(999, a.originalSlot + offset));
+  });
+  document.querySelectorAll('.new-slot-input').forEach(input => {
+    const idx = parseInt(input.dataset.idx);
+    input.value = state.assignments[idx].newSlot;
+  });
+  validateSlots();
+}
+
+function resetSlots() {
+  state.assignments.forEach(a => { a.newSlot = a.originalSlot; });
+  document.querySelectorAll('.new-slot-input').forEach(input => {
+    const idx = parseInt(input.dataset.idx);
+    input.value = state.assignments[idx].originalSlot;
+  });
+  validateSlots();
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+
+async function exportPpak() {
+  if (!validateSlots()) return;
+
+  // Build slot remap: originalSlot -> newSlot
+  const slotRemap = {};
+  for (const a of state.assignments) {
+    if (a.originalSlot !== a.newSlot) {
+      slotRemap[a.originalSlot] = a.newSlot;
+    }
+  }
+
+  // Clone the original tar entries and patch pad files
+  const patchedTarFiles = state.tarFiles.map(entry => {
+    const clone = { name: entry.name, typeFlag: entry.typeFlag, data: new Uint8Array(entry.data), originalHeader: new Uint8Array(entry.originalHeader), originalSize: entry.originalSize };
+
+    // Is this a pad file?
+    if (/^pads\/[a-d]\/p\d+$/.test(entry.name)) {
+      const view = new DataView(clone.data.buffer);
+      const currentSlot = view.getUint16(1, true);
+      if (slotRemap[currentSlot] !== undefined) {
+        view.setUint16(1, slotRemap[currentSlot], true);
+      }
+    }
+
+    return clone;
+  });
+
+  // Rebuild the tar
+  const newTar = buildTar(patchedTarFiles);
+
+  // Build new zip
+  const newZip = new JSZip();
+
+  // Copy everything from original zip, but replace the tar and rename sound files
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+
+    // Replace the project tar
+    if (name.match(/projects\/P\d+\.tar$/i)) {
+      newZip.file(name, newTar);
+      continue;
+    }
+
+    // Rename sound files if their slot changed
+    const soundMatch = name.match(/^(.*\/sounds\/)(\d+)(\s+.+\.wav)$/i);
+    if (soundMatch) {
+      const slot = parseInt(soundMatch[2]);
+      const newSlot = slotRemap[slot];
+      if (newSlot !== undefined) {
+        const newName = `${soundMatch[1]}${String(newSlot).padStart(3,'0')}${soundMatch[3]}`;
+        newZip.file(newName, await entry.async('arraybuffer'));
+        continue;
+      }
+    }
+
+    // Copy unchanged
+    newZip.file(name, await entry.async('arraybuffer'));
+  }
+
+  // Generate and download
+  const blob = await newZip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const baseName = state.filename.replace(/\.ppak$/i, '');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${baseName}_remapped.ppak`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── TAR parser ─────────────────────────────────────────────────────────────
+// Preserves ALL entries (files + directories) and their original headers,
+// so the rebuilder can produce a byte-accurate round-trip.
+
+function parseTar(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const entries = [];
+  let offset = 0;
+
+  while (offset + 512 <= bytes.length) {
+    const header = bytes.slice(offset, offset + 512);
+    if (header.every(b => b === 0)) break;
+
+    const name = readString(header, 0, 100);
+    if (!name) { offset += 512; continue; }
+
+    const sizeStr = readString(header, 124, 12).trim();
+    const size = parseInt(sizeStr, 8) || 0;
+    const typeFlag = String.fromCharCode(header[156]);
+    const normName = name.replace(/^\.\//, '').replace(/^\//, '');
+
+    const data = (typeFlag === '0' || typeFlag === '\0')
+      ? bytes.slice(offset + 512, offset + 512 + size)
+      : new Uint8Array(0);
+
+    entries.push({
+      name: normName,
+      typeFlag,
+      data: new Uint8Array(data),
+      originalHeader: new Uint8Array(header),
+      originalSize: size,
+    });
+
+    offset += 512 + Math.ceil(size / 512) * 512;
+  }
+
+  return entries;
+}
+
+function findTarFile(entries, name) {
+  const norm = name.replace(/^\.\//, '').replace(/^\//, '');
+  const e = entries.find(e => e.name === norm);
+  return e ? e.data : null;
+}
+
+function readString(bytes, offset, length) {
+  let str = '';
+  for (let i = offset; i < offset + length && bytes[i] !== 0; i++) {
+    str += String.fromCharCode(bytes[i]);
+  }
+  return str;
+}
+
+// ── TAR builder ────────────────────────────────────────────────────────────
+// Uses original headers verbatim for unchanged entries (byte-perfect round-trip).
+// Only rewrites the size field + checksum when an entry's data has changed.
+
+function buildTar(entries) {
+  const blocks = [];
+
+  for (const entry of entries) {
+    const header = new Uint8Array(entry.originalHeader);
+    const size = entry.data.length;
+
+    if (size !== entry.originalSize) {
+      // Data changed — rewrite size field as null-terminated octal
+      const sizeStr = size.toString(8);
+      for (let i = 0; i < 12; i++) {
+        header[124 + i] = i < sizeStr.length ? sizeStr.charCodeAt(i) : 0;
+      }
+      // Recompute checksum (8 spaces as placeholder while summing)
+      for (let i = 148; i < 156; i++) header[i] = 0x20;
+      let checksum = 0;
+      for (let i = 0; i < 512; i++) checksum += header[i];
+      const csStr = checksum.toString(8);
+      header[148 + csStr.length] = 0;
+      for (let i = csStr.length + 1; i < 8; i++) header[148 + i] = 0x20;
+      for (let i = 0; i < csStr.length; i++) header[148 + i] = csStr.charCodeAt(i);
+    }
+    // If size unchanged, original header bytes (including checksum) are already valid
+
+    blocks.push(header);
+
+    if (size > 0) {
+      const paddedSize = Math.ceil(size / 512) * 512;
+      const dataBlock = new Uint8Array(paddedSize);
+      dataBlock.set(entry.data);
+      blocks.push(dataBlock);
+    }
+  }
+
+  // Two zero blocks = end of archive
+  blocks.push(new Uint8Array(1024));
+
+  const total = blocks.reduce((s, b) => s + b.length, 0);
+  const out = new Uint8Array(total);
+  let pos = 0;
+  for (const b of blocks) { out.set(b, pos); pos += b.length; }
+  return out;
+}
+
+</script>
+<div id="sections"></div>
+
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const PAD_LABELS = ['7','8','9','4','5','6','1','2','3','.','0','E'];
+const GROUPS = ['a','b','c','d'];
+
+// ── State ──────────────────────────────────────────────────────────────────
+
+let state = null; // parsed project data
+let zip = null;   // the original JSZip instance
+
+// ── Drop zone ──────────────────────────────────────────────────────────────
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('hover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('hover');
+  handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+// ── File handling ──────────────────────────────────────────────────────────
+
+async function handleFile(file) {
+  if (!file || !file.name.endsWith('.ppak')) {
+    alert('Please provide a .ppak file.');
+    return;
+  }
+
+  const sections = document.getElementById('sections');
+  sections.innerHTML = '<p>Parsing...</p>';
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    zip = await JSZip.loadAsync(arrayBuffer);
+    state = await parsePpak(zip, file.name);
+    dropZone.classList.add('loaded');
+    dropZone.querySelector('h2').textContent = 'add another .ppak file to remap';
+    dropZone.querySelector('h2').classList.add('loaded');
+    renderAll();
+  } catch (err) {
+    sections.innerHTML = `<h3 class="error">error parsing file: ${err.message}</h3>`;
+    console.error(err);
+  }
+}
+
+// ── Parser ─────────────────────────────────────────────────────────────────
+
+async function parsePpak(zip, filename) {
+  // Read meta.json
+  const metaFile = zip.file('meta.json') || zip.file('/meta.json');
+  const meta = metaFile ? JSON.parse(await metaFile.async('string')) : {};
+
+  // Find the project tar (e.g. /projects/P01.tar)
+  const tarEntry = Object.values(zip.files).find(f => f.name.match(/projects\/P\d+\.tar$/i));
+  if (!tarEntry) throw new Error('cannot find project .tar inside .ppak');
+
+  const projectName = tarEntry.name.match(/(P\d+)\.tar$/i)[1];
+  const tarBuffer = await tarEntry.async('arraybuffer');
+  const tarFiles = parseTar(tarBuffer);
+
+  // Parse sounds index from zip
+  const sounds = {}; // slot -> { filename, wavData }
+  for (const [name, entry] of Object.entries(zip.files)) {
+    const m = name.match(/sounds\/(\d+)\s+(.+)\.wav$/i);
+    if (m) {
+      const slot = parseInt(m[1], 10);
+      sounds[slot] = { filename: name, name: m[2], slot };
+    }
+  }
+
+  // Parse pad files from tar
+  const pads = {}; // 'a' -> [{ label, padFile, slot, data }, ...]
+  for (const g of GROUPS) {
+    pads[g] = [];
+    for (let pi = 0; pi < 12; pi++) {
+      const label = PAD_LABELS[pi];
+      const padPath = `${g}/p${String(pi+1).padStart(2,'0')}`;
+      const padData = findTarFile(tarFiles, `pads/${padPath}`);
+      if (!padData) throw new Error(`missing pad file: pads/${padPath}`);
+      const slot = new DataView(padData.buffer).getUint16(1, true); // LE uint16 at offset 1
+      pads[g].push({ label, padFile: padPath, slot, originalSlot: slot, data: new Uint8Array(padData) });
+    }
+  }
+
+  // Parse pattern files from tar — determine which pad labels fire per group
+  const patternPads = {}; // 'a' -> Set of pad labels
+  for (const g of GROUPS) {
+    const patData = findTarFile(tarFiles, `patterns/${g}01`);
+    const used = new Set();
+    if (patData && patData.length >= 4) {
+      const nEvents = patData[2];
+      for (let i = 0; i < nEvents; i++) {
+        const offset = 4 + i * 8;
+        if (offset + 2 >= patData.length) break;
+        const padIdx = patData[offset + 2] / 8;
+        if (padIdx >= 0 && padIdx < 12) used.add(PAD_LABELS[padIdx]);
+      }
+    }
+    patternPads[g] = used;
+  }
+
+  // Build flat list of all assigned pads with scene usage
+  const assignments = [];
+  for (const g of GROUPS) {
+    for (const pad of pads[g]) {
+      if (pad.slot === 0) continue;
+      const usedInScene = patternPads[g].has(pad.label);
+      const sound = sounds[pad.slot];
+      assignments.push({
+        group: g.toUpperCase(),
+        label: pad.label,
+        padRef: pad,
+        originalSlot: pad.slot,
+        newSlot: pad.slot, // editable
+        soundName: sound ? sound.name : '(sound not in pak)',
+        usedInScene,
+      });
+    }
+  }
+
+  return { meta, filename, projectName, sounds, pads, patternPads, assignments, tarFiles, tarBuffer };
+}
+
+// ── Renderer ───────────────────────────────────────────────────────────────
+
+function renderAll() {
+  const sections = document.getElementById('sections');
+  sections.innerHTML = '';
+
+  // File name section
+  const metaName = document.createElement('h2');
   metaName.textContent = state.filename;
   sections.appendChild(metaName);
 
