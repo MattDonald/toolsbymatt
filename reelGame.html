@@ -7,10 +7,10 @@
     #reelGame #timer-svg { width: 350px; height: 350px; transform: rotate(-90deg); pointer-events: none; z-index: 1; }
     #reelGame #timer-bg { fill: none; stroke: rgba(252, 111, 47, 0.1); stroke-width: 1; }
     #reelGame #timer-path { fill: none; stroke: #FC6F2F; stroke-width: 1; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear, stroke 0.3s; }
-    #reelGame dotlottie-player { width: 350px; height: 350px; z-index: 2; cursor: ns-resize; }
-    #reelGame .ui-layer { z-index: 3; pointer-events: none; } 
-    #reelGame #sync-btn { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
-    #reelGame #sync-btn.clickable { cursor: pointer; pointer-events: auto; }
+    #reelGame dotlottie-player { width: 350px; height: 350px; z-index: 2; cursor: pointer; }
+    #reelGame .ui-layer { z-index: 3; } 
+    #reelGame #sync-btn { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; pointer-events: auto; }
+    #reelGame #sync-btn.clickable { cursor: pointer; }
     #reelGame #sync-btn.clickable:hover { background: #FFEBD2; color: #FC6F2F; }
     @keyframes fast-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     #reelGame #sync-btn.warning { animation: fast-blink 0.2s infinite; }
@@ -35,6 +35,283 @@
 
 <script>
     // --- GLOBAL CONFIGURATION ---
+    const BASE_TEMPO = 120;       
+    const LOOP_BARS = 2;          
+    const BEATS_PER_BAR = 4;      
+    const CIRCLE_CIRCUMFERENCE = 301.59; 
+    // ----------------------------
+    
+    const baseTickInterval = 60 / BASE_TEMPO; 
+    const totalBeats = LOOP_BARS * BEATS_PER_BAR;
+
+    let audioCtx, drumBuffer, loopSource, masterGain;
+    let targetRate = 1.0; 
+    let currentRate = 0.8 + (Math.random() * 0.4);
+    
+    let isActive = false;
+    let isSynced = false;
+    let engineClosed = false;
+    let stopping = false;
+    let timeLeft = 10.0;
+    const maxTime = 10.0;
+    let timerInterval;
+    let driftCount = 0; 
+
+    let currentLoopPhase = 0;
+    let lastTime = 0;
+    let nextTickTime = 0;
+
+    const player = document.getElementById('tp7-player');
+    const timerPath = document.getElementById('timer-path');
+    const syncBtn = document.getElementById('sync-btn');
+    const container = document.getElementById('reelGame');
+
+    function updateButtonState() {
+        if (isSynced || stopping) return;
+
+        // State 1: Start
+        if (!isActive) {
+            syncBtn.innerHTML = '<span class="action-word"></span> the reel to play';
+            syncBtn.classList.remove('clickable', 'warning');
+            return;
+        }
+
+        // State 4: Warning (Overrides 2, 3, 5)
+        if (timeLeft < 3) {
+            syncBtn.innerHTML = "tempo change coming";
+            syncBtn.classList.add('warning');
+            syncBtn.classList.remove('clickable');
+        } else {
+            syncBtn.classList.remove('warning');
+            const diff = Math.abs(currentRate - targetRate);
+
+            // State 3: In Sync
+            if (diff < 0.005) {
+                syncBtn.innerHTML = "in sync";
+                // Clickable only if a tempo change has happened (Point 5)
+                if (driftCount > 0) syncBtn.classList.add('clickable');
+                else syncBtn.classList.remove('clickable');
+            } 
+            // State 2: Active Playing
+            else if (driftCount === 0) {
+                syncBtn.innerHTML = "scroll up + down to pitch";
+                syncBtn.classList.remove('clickable');
+            } 
+            // State 5: The "Win" Action
+            else {
+                syncBtn.innerHTML = "use tp7_speed_sync";
+                syncBtn.classList.add('clickable');
+            }
+        }
+    }
+
+    async function startEngine() {
+        if (isActive || engineClosed) return;
+        
+        // Setup Audio Context immediately on click for browser compatibility
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+        syncBtn.innerHTML = "loading...";
+
+        try {
+            const res = await fetch('https://cdn.jsdelivr.net/gh/mattdonald/toolsbymatt@main/120_ASH_TOM_LOOP_A.wav');
+            const arrayBuffer = await res.arrayBuffer();
+            drumBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+            masterGain = audioCtx.createGain();
+            masterGain.connect(audioCtx.destination);
+
+            createSource();
+            
+            let now = audioCtx.currentTime;
+            nextTickTime = now + 0.1; 
+            lastTime = now;
+            
+            scheduleMetronome();
+            requestAnimationFrame(updatePhase);
+
+            player.play();
+            isActive = true;
+            updateButtonState();
+            startTimer();
+            container.focus();
+        } catch (e) { 
+            syncBtn.innerHTML = "audio error";
+            console.error(e);
+        }
+    }
+
+    function createSource() {
+        if (loopSource) try { loopSource.stop(); } catch(e){}
+        loopSource = audioCtx.createBufferSource();
+        loopSource.buffer = drumBuffer;
+        loopSource.loop = true;
+        loopSource.playbackRate.value = currentRate;
+        loopSource.connect(masterGain);
+        loopSource.start(0);
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = maxTime;
+        timerInterval = setInterval(() => {
+            if (isSynced || stopping) { 
+                clearInterval(timerInterval); 
+                return; 
+            }
+            timeLeft -= 0.1;
+            
+            const offset = CIRCLE_CIRCUMFERENCE - (timeLeft / maxTime) * CIRCLE_CIRCUMFERENCE;
+            timerPath.style.strokeDashoffset = offset;
+            
+            updateButtonState();
+            if (timeLeft <= 0) triggerDrift();
+        }, 100);
+    }
+
+    function triggerDrift() {
+        targetRate = 0.8 + (Math.random() * 0.5);
+        let driftOffset = (Math.random() > 0.5 ? 0.15 : -0.15) + (Math.random() * 0.05);
+        currentRate = targetRate + driftOffset;
+        currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
+        
+        loopSource.playbackRate.setTargetAtTime(currentRate, audioCtx.currentTime, 0.2);
+        player.setSpeed(currentRate);
+        
+        driftCount++;
+        timeLeft = maxTime;
+        updateButtonState();
+    }
+
+    function performSync() {
+        if (!isActive || isSynced) return;
+        isSynced = true; 
+        clearInterval(timerInterval);
+        syncBtn.classList.remove('warning', 'clickable');
+        timerPath.style.stroke = "rgba(252, 111, 47, 0.2)";
+
+        let now = audioCtx.currentTime;
+        let portionDuration = drumBuffer.duration / totalBeats; 
+        let nearestPortion = Math.round(currentLoopPhase / portionDuration) % totalBeats;
+        
+        let currentTickInterval = baseTickInterval / targetRate;
+        let timeSinceLastClick = Math.max(0, now - (nextTickTime - currentTickInterval));
+        let snappedOffset = ((nearestPortion * portionDuration) + (timeSinceLastClick * targetRate)) % drumBuffer.duration;
+
+        loopSource.stop();
+        loopSource = audioCtx.createBufferSource();
+        loopSource.buffer = drumBuffer;
+        loopSource.loop = true;
+        loopSource.playbackRate.value = targetRate; 
+        loopSource.connect(masterGain);
+        loopSource.start(now, snappedOffset);
+
+        currentRate = targetRate; // Update global speed so scroll doesn't "jump"
+        player.setSpeed(targetRate);
+        player.seek((snappedOffset / drumBuffer.duration) * 100);
+
+        syncBtn.innerHTML = "in sync + on grid";
+    }
+
+    function tapeStopEngine() {
+        if (engineClosed || !isActive || stopping) return;
+        stopping = true;
+        const stopDuration = 1.5; 
+        const now = audioCtx.currentTime;
+        
+        loopSource.playbackRate.setValueAtTime(loopSource.playbackRate.value, now);
+        loopSource.playbackRate.exponentialRampToValueAtTime(0.01, now + stopDuration);
+        
+        player.setSpeed(0.1); 
+        setTimeout(() => player.pause(), stopDuration * 1000);
+        
+        syncBtn.innerHTML = "stopped";
+        timerPath.style.opacity = "0";
+
+        setTimeout(() => {
+            if (loopSource) try { loopSource.stop(); } catch(e){}
+            if (audioCtx) audioCtx.close();
+            engineClosed = true;
+            isActive = false;
+        }, (stopDuration + 0.1) * 1000);
+    }
+
+    container.addEventListener('wheel', (e) => {
+        if (e.target.closest('#sync-btn')) return;
+        if (engineClosed || stopping || !isActive) return;
+        if (isSynced) { tapeStopEngine(); return; }
+        e.preventDefault();
+        e.stopPropagation(); 
+        currentRate += e.deltaY * -0.0007;
+        currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
+        loopSource.playbackRate.value = currentRate;
+        player.setSpeed(currentRate);
+        updateButtonState();
+    }, { passive: false });
+
+    let lastTouchY = 0;
+    container.addEventListener('touchstart', (e) => {
+        if (e.target.closest('#sync-btn')) return;
+        if (!isActive || engineClosed || stopping) return;
+        lastTouchY = e.touches[0].clientY;
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+        if (e.target.closest('#sync-btn')) return;
+        if (!isActive || engineClosed || stopping) return;
+        if (isSynced) { tapeStopEngine(); return; }
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation(); 
+        const currentTouchY = e.touches[0].clientY;
+        currentRate += (lastTouchY - currentTouchY) * 0.002;
+        currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
+        loopSource.playbackRate.value = currentRate;
+        player.setSpeed(currentRate);
+        lastTouchY = currentTouchY;
+        updateButtonState();
+    }, { passive: false });
+
+    function scheduleMetronome() {
+        if (engineClosed || stopping) return;
+        let now = audioCtx.currentTime;
+        let currentTickInterval = baseTickInterval / targetRate; 
+
+        while (nextTickTime < now + 0.1) {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.connect(g); g.connect(masterGain);
+            osc.frequency.value = 1000;
+            g.gain.setValueAtTime(0.4, nextTickTime); 
+            g.gain.exponentialRampToValueAtTime(0.0001, nextTickTime + 0.05);
+            osc.start(nextTickTime); osc.stop(nextTickTime + 0.05);
+            nextTickTime += currentTickInterval; 
+        }
+        setTimeout(scheduleMetronome, 50);
+    }
+
+    function updatePhase() {
+        if (isActive && !isSynced) {
+            let now = audioCtx.currentTime;
+            currentLoopPhase += (now - lastTime) * currentRate;
+            currentLoopPhase %= drumBuffer.duration;
+            lastTime = now;
+        }
+        if (!engineClosed) requestAnimationFrame(updatePhase);
+    }
+
+    syncBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        if (!isActive) startEngine();
+        else if (syncBtn.classList.contains('clickable')) performSync();
+    });
+    
+    player.addEventListener('click', (e) => {
+        if (!isActive) startEngine();
+    });
+</script>    // --- GLOBAL CONFIGURATION ---
     const BASE_TEMPO = 120;       
     const LOOP_BARS = 2;          
     const BEATS_PER_BAR = 4;      
