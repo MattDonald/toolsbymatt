@@ -1,45 +1,48 @@
 <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
 
 <style>
-    #reelGame { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; outline: none; text-transform: lowercase; user-select: none; overscroll-behavior: none; touch-action: none; } 
-    #reelGame h2 { color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; text-align: center; font-size: 50px; font-weight: 500; line-height: 50px; }
-    #reelGame p { color: rgba(252, 111, 47, 1); font-family: JetBrains Mono; font-style: italic; text-align: center; font-size: 12px; font-weight: 400; line-height: 20px; font-variation-settings: 'wght' 600; }
-    #reelGame #timer { width: 180px; height: 2px; background: rgba(252, 111, 47, 0.2); margin: 12px auto; border-radius: 2px; overflow: hidden; }
-    #reelGame #timer-fill { width: 100%; height: 100%; background: rgba(252, 111, 47, 1); transition: background 0.3s; }
-    #reelGame dotlottie-player { width: 350px; height: 350px; cursor: pointer; }
-    #reelGame .ui-layer { margin-top: 10px; }
-    #reelGame #sync-btn { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
-    #reelGame #sync-btn:hover { background: #FFEBD2; color: #FC6F2F; border: 1px solid #FC6F2F; }
-    #reelGame #sync-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    @keyframes fast-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    #reelGame .warning { color: white !important; background: rgba(252, 111, 47, 1); padding: 0 4px; animation: fast-blink 0.2s infinite; }
-    .action-word::before { content: "click"; } 
-    @media (hover: none) and (pointer: coarse) { .action-word::before { content: "tap"; } }
+    #reelGame { width: 100%; height: 100%; display: grid; place-items: center; outline: none; text-transform: lowercase; user-select: none; overscroll-behavior: none; touch-action: none; position: relative; }
+    #reelGame .game-stack { display: grid; grid-template-areas: "main"; place-items: center; width: 500px; height: 500px; }
+    #reelGame .game-stack > * { grid-area: main; }
+    #reelGame #timer-svg { width: 350px; height: 350px; transform: rotate(-90deg); pointer-events: none; z-index: 1; }
+    #reelGame #timer-bg { fill: none; stroke: rgba(252, 111, 47, 0.1); stroke-width: 1; }
+    #reelGame #timer-path { fill: none; stroke: #FC6F2F; stroke-width: 1; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear, stroke 0.3s; }
+    #reelGame dotlottie-player { width: 350px; height: 350px; z-index: 2; cursor: ns-resize; }
+    #reelGame .ui-layer { z-index: 3; pointer-events: none; } 
+    #reelGame #sync-btn { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 10px 28px 12px 28px; font-family: custom_175773, sans-serif; font-weight: 500; font-size: 16px; line-height: 1; transition: all 0.2s; pointer-events: auto; cursor: default; }
+    #reelGame #sync-btn.clickable { cursor: pointer; }
+    #reelGame #sync-btn.clickable:hover { background: #FFEBD2; color: #FC6F2F; }
+    @keyframes fast-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    #reelGame #sync-btn.warning { animation: fast-blink 0.2s infinite; }
+    #reelGame .action-word::before { content: "click"; } 
+    @media (hover: none) and (pointer: coarse) { #reelGame .action-word::before { content: "tap"; } }
 </style>
 
 <div id="reelGame" tabindex="0">
-    <div id="msg">
-        <h2 id="main-headline">can *you* sync it?</h2>
-        <p class="instruction-text" id="sub-instruction"><span class="action-word"></span> the reel to play</p>
-        <div id="timer"><div id="timer-fill"></div></div>
-    </div>
-    
-    <dotlottie-player id="tp7-player" src="https://cdn.jsdelivr.net/gh/mattdonald/toolsbymatt@main/tp7_reel.lottie" background="transparent" loop></dotlottie-player>
+    <div class="game-stack">
+        <svg id="timer-svg" viewBox="0 0 100 100">
+            <circle id="timer-bg" cx="50" cy="50" r="48" />
+            <circle id="timer-path" cx="50" cy="50" r="48" stroke-dasharray="301.59" stroke-dashoffset="0" />
+        </svg>
 
-    <div class="ui-layer">
-        <button id="sync-btn">use tp7_speed_sync</button>
+        <dotlottie-player id="tp7-player" src="https://cdn.jsdelivr.net/gh/mattdonald/toolsbymatt@main/tp7_reel.lottie" background="transparent" loop></dotlottie-player>
+
+        <div class="ui-layer">
+            <button id="sync-btn"><span class="action-word"></span> the reel to play</button>
+        </div>
     </div>
 </div>
 
 <script>
     // --- GLOBAL CONFIGURATION ---
-    const BASE_TEMPO = 120;       // Native BPM of the audio file
-    const LOOP_BARS = 2;          // Length of the loop in bars
-    const BEATS_PER_BAR = 4;      // Time signature denominator (usually 4 for 4/4 time)
+    const BASE_TEMPO = 120;       
+    const LOOP_BARS = 2;          
+    const BEATS_PER_BAR = 4;      
     // ----------------------------
     
     const baseTickInterval = 60 / BASE_TEMPO; 
     const totalBeats = LOOP_BARS * BEATS_PER_BAR;
+    const CIRCLE_CIRCUMFERENCE = 301.59; 
 
     let audioCtx, drumBuffer, loopSource, masterGain;
     let targetRate = 1.0; 
@@ -52,29 +55,62 @@
     let timeLeft = 10.0;
     const maxTime = 10.0;
     let timerInterval;
+    let driftCount = 0; 
 
     let currentLoopPhase = 0;
     let lastTime = 0;
     let nextTickTime = 0;
 
     const player = document.getElementById('tp7-player');
-    const headline = document.getElementById('main-headline');
-    const subInstruction = document.getElementById('sub-instruction');
-    const timerFill = document.getElementById('timer-fill');
+    const timerPath = document.getElementById('timer-path');
     const syncBtn = document.getElementById('sync-btn');
     const container = document.getElementById('reelGame');
+
+    function updateButtonState() {
+        if (isSynced || stopping) return;
+
+        if (!isActive) {
+            syncBtn.innerHTML = '<span class="action-word"></span> the reel to play';
+            syncBtn.classList.remove('clickable', 'warning');
+            return;
+        }
+
+        if (timeLeft < 3) {
+            syncBtn.innerHTML = "tempo change coming";
+            syncBtn.classList.add('warning');
+            syncBtn.classList.remove('clickable');
+        } else {
+            syncBtn.classList.remove('warning');
+            const diff = Math.abs(currentRate - targetRate);
+
+            if (diff < 0.005) {
+                syncBtn.innerHTML = "in sync";
+                // FIXED: If they hit perfect sync AFTER the first drift, let them click it to win!
+                if (driftCount > 0) {
+                    syncBtn.classList.add('clickable');
+                } else {
+                    syncBtn.classList.remove('clickable');
+                }
+            } else if (driftCount === 0) {
+                syncBtn.innerHTML = "scroll up + down to pitch";
+                syncBtn.classList.remove('clickable');
+            } else {
+                syncBtn.innerHTML = "use tp7_speed_sync";
+                syncBtn.classList.add('clickable');
+            }
+        }
+    }
 
     async function startEngine() {
         if (isActive || engineClosed) return;
         container.focus();
-        subInstruction.innerHTML = "loading audio...";
+        syncBtn.innerHTML = "loading...";
 
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         masterGain = audioCtx.createGain();
         masterGain.connect(audioCtx.destination);
 
         try {
-            // Replace this URL when you swap the audio
             const res = await fetch('https://cdn.jsdelivr.net/gh/mattdonald/toolsbymatt@main/120_ASH_TOM_LOOP_A.wav');
             const arrayBuffer = await res.arrayBuffer();
             drumBuffer = await audioCtx.decodeAudioData(arrayBuffer);
@@ -90,10 +126,10 @@
 
             player.play();
             isActive = true;
-            subInstruction.innerHTML = "scroll up & down for pitch";
+            updateButtonState();
             startTimer();
         } catch (e) { 
-            subInstruction.innerHTML = "error loading audio.";
+            syncBtn.innerHTML = "audio error";
         }
     }
 
@@ -111,55 +147,46 @@
         clearInterval(timerInterval);
         timeLeft = maxTime;
         timerInterval = setInterval(() => {
-            if (isSynced || stopping) { clearInterval(timerInterval); return; }
-            timeLeft -= 0.1;
-            timerFill.style.width = (timeLeft / maxTime * 100) + "%";
-            
-            if (timeLeft < 3) {
-                subInstruction.classList.add('warning');
-                subInstruction.innerHTML = "speed change coming!";
-            } else {
-                subInstruction.classList.remove('warning');
-                const diff = Math.abs(currentRate - targetRate);
-                
-                if (diff < 0.005) { headline.innerText = "in sync"; }
-                else if (diff < 0.03) { headline.innerText = "getting close"; } 
-                else { headline.innerText = "scroll to sync"; }
-                
-                subInstruction.innerHTML = "up + down to change pitch";
+            if (isSynced || stopping) { 
+                clearInterval(timerInterval); 
+                return; 
             }
-
+            timeLeft -= 0.1;
+            
+            const offset = CIRCLE_CIRCUMFERENCE - (timeLeft / maxTime) * CIRCLE_CIRCUMFERENCE;
+            timerPath.style.strokeDashoffset = offset;
+            
+            updateButtonState();
             if (timeLeft <= 0) triggerDrift();
         }, 100);
     }
 
     function triggerDrift() {
         targetRate = 0.8 + (Math.random() * 0.5);
-        let driftOffset = (Math.random() > 0.5 ? 0.15 : -0.15) + (Math.random() * 0.1);
+        let driftOffset = (Math.random() > 0.5 ? 0.15 : -0.15) + (Math.random() * 0.05);
         currentRate = targetRate + driftOffset;
         currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
         
         loopSource.playbackRate.setTargetAtTime(currentRate, audioCtx.currentTime, 0.2);
         player.setSpeed(currentRate);
+        
+        driftCount++;
         timeLeft = maxTime;
+        updateButtonState();
     }
 
     function performSync() {
         if (!isActive || isSynced) return;
         isSynced = true; 
         clearInterval(timerInterval);
-        syncBtn.disabled = true;
-        subInstruction.classList.remove('warning');
+        syncBtn.classList.remove('warning', 'clickable');
+        timerPath.style.stroke = "rgba(252, 111, 47, 0.2)";
 
         let now = audioCtx.currentTime;
-        
-        // Dynamically calculate the snap points based on total beats
         let portionDuration = drumBuffer.duration / totalBeats; 
         let nearestPortion = Math.round(currentLoopPhase / portionDuration) % totalBeats;
-        
         let currentTickInterval = baseTickInterval / targetRate;
         let timeSinceLastClick = now - (nextTickTime - currentTickInterval);
-        
         let snappedOffset = ((nearestPortion * portionDuration) + (timeSinceLastClick * targetRate)) % drumBuffer.duration;
 
         loopSource.stop();
@@ -173,9 +200,7 @@
         player.setSpeed(targetRate);
         player.seek((snappedOffset / drumBuffer.duration) * 100);
 
-        headline.innerText = "in sync + on grid";
-        subInstruction.innerHTML = "scroll to explore tools by matt";
-        timerFill.style.background = "rgba(252, 111, 47, 1);";
+        syncBtn.innerHTML = "in sync + on grid";
     }
 
     function tapeStopEngine() {
@@ -190,8 +215,8 @@
         player.setSpeed(0.1); 
         setTimeout(() => player.pause(), stopDuration * 1000);
         
-        subInstruction.innerHTML = "session ended";
-        timerFill.style.background = "rgba(252, 111, 47, 0.2)";
+        syncBtn.innerHTML = "stopped";
+        timerPath.style.opacity = "0";
 
         setTimeout(() => {
             if (loopSource) try { loopSource.stop(); } catch(e){}
@@ -201,7 +226,12 @@
         }, (stopDuration + 0.1) * 1000);
     }
 
+    // --- FIXED: SCROLL & TOUCH HANDLING ---
+    // Added bypasses if the target is the button so taps aren't swallowed
+
     container.addEventListener('wheel', (e) => {
+        if (e.target.closest('#sync-btn')) return; // BYPASS FOR BUTTON
+        
         if (engineClosed || stopping || !isActive) return;
         if (isSynced) { tapeStopEngine(); return; }
         
@@ -212,18 +242,22 @@
         currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
         loopSource.playbackRate.value = currentRate;
         player.setSpeed(currentRate);
+        updateButtonState();
     }, { passive: false });
 
     let lastTouchY = 0;
     container.addEventListener('touchstart', (e) => {
+        if (e.target.closest('#sync-btn')) return; // BYPASS FOR BUTTON
+        
         if (!isActive || engineClosed || stopping) return;
         lastTouchY = e.touches[0].clientY;
     }, { passive: true });
 
     container.addEventListener('touchmove', (e) => {
+        if (e.target.closest('#sync-btn')) return; // BYPASS FOR BUTTON
+        
         if (!isActive || engineClosed || stopping) return;
         if (isSynced) { tapeStopEngine(); return; }
-        
         if (e.cancelable) e.preventDefault();
         e.stopPropagation(); 
         
@@ -233,12 +267,12 @@
         loopSource.playbackRate.value = currentRate;
         player.setSpeed(currentRate);
         lastTouchY = currentTouchY;
+        updateButtonState();
     }, { passive: false });
 
     function scheduleMetronome() {
         if (engineClosed || stopping) return;
         let now = audioCtx.currentTime;
-        
         let currentTickInterval = baseTickInterval / targetRate; 
 
         while (nextTickTime < now + 0.1) {
@@ -249,7 +283,6 @@
             g.gain.setValueAtTime(0.4, nextTickTime); 
             g.gain.exponentialRampToValueAtTime(0.0001, nextTickTime + 0.05);
             osc.start(nextTickTime); osc.stop(nextTickTime + 0.05);
-            
             nextTickTime += currentTickInterval; 
         }
         setTimeout(scheduleMetronome, 50);
@@ -268,7 +301,10 @@
     syncBtn.addEventListener('click', (e) => { 
         e.stopPropagation(); 
         if (!isActive) startEngine();
-        else performSync(); 
+        else if (syncBtn.classList.contains('clickable')) performSync();
     });
-    player.addEventListener('click', startEngine);
+    
+    player.addEventListener('click', (e) => {
+        if (!isActive) startEngine();
+    });
 </script>
