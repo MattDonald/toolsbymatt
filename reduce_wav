@@ -774,11 +774,16 @@ function startSource(buf, offset, targetSR){
   src.buffer=buf;
 
   if(targetSR && targetSR < ctx.sampleRate){
-    const cutoff=targetSR/2;
-    const f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),f3=ctx.createBiquadFilter();
-    [f1,f2,f3].forEach(f=>{f.type='lowpass';f.frequency.value=cutoff;f.Q.value=0.707;});
-    src.connect(f1);f1.connect(f2);f2.connect(f3);f3.connect(ctx.destination);
-  } else {
+    const cutoff=targetSR * 0.45;
+    const filters=[...Array(5)].map(()=>{
+        const f=ctx.createBiquadFilter();
+        f.type='lowpass';f.frequency.value=cutoff;f.Q.value=0.707;
+        return f;
+    });
+    filters.reduce((a,b)=>{a.connect(b);return b;});
+    src.connect(filters[0]);
+    filters[filters.length-1].connect(ctx.destination);
+} else {
     src.connect(ctx.destination);
   }
 
