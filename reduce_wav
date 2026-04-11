@@ -1,588 +1,245 @@
 <style>
-#reducer {
-    text-transform: lowercase;
-}
-
-#reducer .drop-zone {
-    border: 2px dashed #FC6F2F;
-    padding: 70px;
-    text-align: center;
-    cursor: pointer;
-}
-
-#reducer .drop-zone.loaded {
-    padding: 12px 20px;
-}
-
-#reducer .fileInfo, #reducer #controls {
-    width: 100%;
-    max-width: 472px;
-    margin: 0 auto;
-}
-
-#reducer .reducedInfo .arrow {
-    color: #FC6F2F;
-    margin: 0 4px;
-}
-
-#reducer .row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin: 20px 0;
-}
-
-#reducer .slider-wrap {
-    position: relative;
-    flex: 1;
-    height: 26px;
-    display: flex;
-    align-items: center;
-}
-
-#reducer input[type=range] {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 4px;
-    background: #FC6F2F;
-    outline: none;
-    cursor: pointer;
-    position: relative;
-    z-index: 2;
-}
-
-#reducer input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    background: #fc6f2f;
-    cursor: pointer;
-    border: 5px solid #FFEBD2;
-}
-
-#reducer input[type=range]::-webkit-slider-thumb:active {
-    transform: scale(1.2);
-}
-
-#reducer input[type=range]::-moz-range-thumb {
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    background: #fc6f2f;
-    cursor: pointer;
-    border: 5px solid #FFEBD2;
-}
-
-#reducer .seg {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-#reducer .ch-toggle {
-    display: flex;
-    width: fit-content;
-}
-
-#reducer .ch-btn {
-    background: #FFEBD2;
-    color: #FC6F2F;
-    border: 1px solid #FC6F2F;
-    padding: 9px 28px 12px 28px;
-    font-family: custom_175773;
-    font-weight: 500;
-    font-size: 18px;
-    cursor: pointer;
-    line-height: 1;
-}
-
-#reducer .ch-btn.active {
-    background: #FC6F2F;
-    color: #FFEBD2;
-    border: 1px solid #FC6F2F;
-    padding: 9px 28px 12px 28px;
-    font-family: custom_175773;
-    font-weight: 500;
-    font-size: 18px;
-    cursor: pointer;
-    line-height: 1;
-}
-
-#reducer .ch-btn:first-child {
-    border-radius: 100px 0 0 100px;
-}
-
-#reducer .ch-btn:last-child {
-    border-radius: 0 100px 100px 0;
-}
-
-#reducer .btn, #reducer #previewBtn:hover, #reducer #downloadBtn:hover {
-    background: #FFEBD2;
-    color: #FC6F2F;
-    border: 1px solid #FC6F2F;
-    border-radius: 100px;
-    padding: 9px 28px 12px 28px;
-    font-family: custom_175773;
-    font-weight: 500;
-    font-size: 18px;
-    cursor: pointer;
-    line-height: 1;
-}
-
-#reducer .btn.active, #reducer #previewBtn, #reducer #downloadBtn {
-    background: #FC6F2F;
-    color: #FFEBD2;
-    border: 1px solid #FC6F2F;
-    border-radius: 100px;
-    padding: 9px 28px 12px 28px;
-    font-family: custom_175773;
-    font-weight: 500;
-    font-size: 18px;
-    cursor: pointer;
-    line-height: 1;
-}
-
-#reducer #previewBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#reducer #previewBtn .preview-icon {
-    width: 20px;
-    height: 20px;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-}
-
-#reducer #previewBtn .preview-icon svg {
-    width: 20px;
-    height: 40px;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-#reducer #previewBtn .preview-icon svg path {
-    fill: #FFEBD2;
-}
-
-#reducer #previewBtn:hover .preview-icon svg path {
-    fill: #FC6F2F;
-}
-
-#reducer #previewBtn.playing .preview-icon svg {
-    top: -20px;
-}
-
-#reducer .btn:disabled, #reducer .svg-toggle:disabled, #reducer input[type=range]:disabled, .ch-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-#reducer .collapsible {
-    margin-top: 14px;
-}
-
-#reducer .svg-toggle {
-    width: 41px;
-    height: 20px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    overflow: hidden;
-    flex-shrink: 0;
-    display: block;
-    position: relative;
-}
-
-#reducer .svg-toggle svg {
-    width: 40px;
-    height: 40px;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-#reducer .svg-toggle.off svg {
-    top: 0;
-}
-
-#reducer .svg-toggle.on svg {
-    top: -20px;
-}
-
-#reducer #previewBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#reducer h2 {
-    color: rgba(252, 111, 47, 1);
-    font-family: custom_175773;
-    font-style: normal;
-    text-align: left;
-    font-size: 50px;
-    font-weight: 500;
-    line-height: 50px;
-    margin: 40px 0;
-}
-
-#reducer #fileInfo h2, #reducer .drop-zone h2 {
-    text-align: center;
-}
-
-#reducer h2.loaded {
-    font-size: 18px;
-    margin: 0;
-    line-height: 25px;
-}
-
-#reducer h3 {
-    font-family: JetBrains Mono;
-    font-weight: 400;
-    font-size: 20px;
-    line-height: 30px;
-    font-style: italic;
-    color: rgba(252, 111, 47, 1);
-    text-align: left;
-    font-variation-settings: 'wght' 600;
-    margin: 20px 0 0 0;
-}
-
-#reducer .row-label {
-    width: 80px;
-    flex-shrink: 0;
-    text-align: right;
-}
-
-#reducer p, #reducer .fileInfo, #reducer .reducedInfo, #reducer .val {
-    color: rgba(252, 111, 47, 1);
-    font-family: JetBrains Mono;
-    font-style: italic;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 20px;
-    font-variation-settings: 'wght' 600;
-}
-
-#reducer .val {
-    width: 60px;
-    text-align: right;
-    flex-shrink: 0;
-}
-
-#reducer .notice {
-    margin: 40px 0;
-}
-
-#reducer .hidden {
-    display: none !important;
-}
-
-@media screen and (max-width: 320px) {
-    #reducer #reducedInfo {
-        display: block;
-    }
-}
-/* File table */
-
-#reducer #fileTable {
-    width: 100%;
-    max-width: 472px;
-    margin: 28px auto 0 auto;
-    border-collapse: collapse;
-}
-
-#reducer #fileTable-wrap {
-    width: 100%;
-    max-width: 472px;
-    margin: 28px auto 0 auto;
-    max-height: calc(5 * 37px);
-    overflow-y: auto;
-}
-
-#reducer #fileTable {
-    width: 100%;
-    margin: 0;
-    border-collapse: collapse;
-}
-
-#reducer #fileTable td {
-    padding: 6px 8px;
-    vertical-align: middle;
-    color: rgba(252, 111, 47, 1);
-    font-family: JetBrains Mono;
-    font-style: italic;
-    font-size: 12px;
-    font-variation-settings: 'wght' 600;
-    border-bottom: 1px solid rgba(252, 111, 47, 0.15);
-}
-
-#reducer #fileTable tr.playing td {
-    background: rgba(252, 111, 47, 1);
-}
-
-#reducer #fileTable .row-play-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    width: 28px;
-    height: 28px;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-}
-
-#reducer #fileTable .row-play-btn svg {
-    width: 28px;
-    height: 56px;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-#reducer #fileTable .row-play-btn.playing svg {
-    top: -28px;
-}
-
-#reducer #fileTable .row-play-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-#reducer #fileTable .col-name {
-    word-break: break-all;
-}
-
-#reducer #fileTable .col-ch, #reducer #fileTable .col-dur {
-    white-space: nowrap;
-    text-align: right;
-}
+  #reducer { text-transform: lowercase; }
+  #reducer .drop-zone { border: 2px dashed #FC6F2F; padding: 70px; text-align: center; cursor: pointer; }
+  #reducer .drop-zone.loaded { padding: 12px 20px; }
+  #reducer .fileInfo, #reducer #controls { width: 100%; max-width: 472px; margin: 0 auto; }
+  #reducer .reducedInfo .arrow { color: #FC6F2F; margin: 0 4px; }
+  #reducer .row { display: flex; align-items: center; gap: 14px; margin: 20px 0; }
+  #reducer .slider-wrap { position: relative; flex: 1; height: 26px; display: flex; align-items: center; }
+  #reducer input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: #FC6F2F; outline: none; cursor: pointer; position: relative; z-index: 2; }
+  #reducer input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #fc6f2f; cursor: pointer; border: 5px solid #FFEBD2; }
+  #reducer input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
+  #reducer input[type=range]::-moz-range-thumb { width: 25px; height: 25px; border-radius: 50%; background: #fc6f2f; cursor: pointer; border: 5px solid #FFEBD2; }
+  #reducer .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  #reducer .ch-toggle { display: flex; width: fit-content; }
+  #reducer .ch-btn { background: #FFEBD2; color: #FC6F2F; border: 1px solid #FC6F2F; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
+  #reducer .ch-btn.active { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
+  #reducer .ch-btn:first-child { border-radius: 100px 0 0 100px; }
+  #reducer .ch-btn:last-child { border-radius: 0 100px 100px 0; }
+  #reducer .btn, #reducer #previewBtn:hover,  #reducer #downloadBtn:hover { background: #FFEBD2; color: #FC6F2F; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
+  #reducer .btn.active, #reducer #previewBtn, #reducer #downloadBtn { background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
+  #reducer #previewBtn { display: inline-flex; align-items: center; gap: 10px; }
+  #reducer #previewBtn .preview-icon { width: 20px; height: 20px; overflow: hidden; position: relative; flex-shrink: 0; }
+  #reducer #previewBtn .preview-icon svg { width: 20px; height: 40px; position: absolute; top: 0; left: 0; }
+  #reducer #previewBtn .preview-icon svg path { fill: #FFEBD2; }
+  #reducer #previewBtn:hover .preview-icon svg path { fill: #FC6F2F; }
+  #reducer #previewBtn.playing .preview-icon svg { top: -20px; }
+  #reducer .btn:disabled, #reducer .svg-toggle:disabled, #reducer input[type=range]:disabled, .ch-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  #reducer .collapsible { margin-top: 14px; }
+  #reducer .svg-toggle { width: 41px; height: 20px; background: none; border: none; padding: 0; cursor: pointer; overflow: hidden; flex-shrink: 0; display: block; position: relative; }
+  #reducer .svg-toggle svg { width: 40px; height: 40px; position: absolute; top: 0; left: 0; }
+  #reducer .svg-toggle.off svg { top: 0; }
+  #reducer .svg-toggle.on svg { top: -20px; }
+  #reducer #previewBtn { display: inline-flex; align-items: center; gap: 10px; }
+  #reducer h2 { color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; text-align: left; font-size: 50px; font-weight: 500; line-height: 50px; margin: 40px 0; }
+  #reducer #fileInfo h2, #reducer .drop-zone h2 { text-align: center; }
+  #reducer h2.loaded { font-size: 18px; margin: 0; line-height: 25px; }
+  #reducer h3 { font-family: JetBrains Mono; font-weight: 400; font-size: 20px; line-height: 30px; font-style: italic; color: rgba(252, 111, 47, 1); text-align: left; font-variation-settings: 'wght' 600; margin: 20px 0 0 0; }
+  #reducer .row-label { width: 80px; flex-shrink: 0; text-align: right; }
+  #reducer p, #reducer .fileInfo, #reducer .reducedInfo, #reducer .val { color: rgba(252, 111, 47, 1); font-family: JetBrains Mono; font-style: italic; text-align: left; font-size: 12px; font-weight: 400; line-height: 20px; font-variation-settings: 'wght' 600; }
+  #reducer .val { width: 60px; text-align: right; flex-shrink: 0; }
+  #reducer .notice { margin: 40px 0; }
+  #reducer .hidden { display: none !important; }
+  @media screen and (max-width: 320px) { #reducer #reducedInfo { display: block; } }
+  #reducer #fileTable { width: 100%; max-width: 472px; margin: 28px auto 0 auto; border-collapse: collapse; }
+  #reducer #fileTable-wrap { width: 100%; max-width: 472px; margin: 28px auto 0 auto; max-height: calc(5 * 37px); overflow-y: auto; }
+  #reducer #fileTable { width: 100%; margin: 0; border-collapse: collapse; }
+  #reducer #fileTable td { padding: 6px 8px; vertical-align: middle; color: rgba(252,111,47,1); font-family: JetBrains Mono; font-style: italic; font-size: 12px; font-variation-settings: 'wght' 600; border-bottom: 1px solid rgba(252,111,47,0.15); }
+  #reducer #fileTable tr.playing td { background: rgba(252, 111, 47, 1); color: #FFEBD2; }
+  #reducer #fileTable .row-play-btn { background: none; border: none; padding: 0; cursor: pointer; width: 28px; height: 28px; overflow: hidden; position: relative; flex-shrink: 0; }
+  #reducer #fileTable .row-play-btn svg { width: 28px; height: 56px; position: absolute; top: 0; left: 0; }
+  #reducer #fileTable .row-play-btn.playing svg { top: -28px; }
+  #reducer #fileTable .row-play-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  #reducer #fileTable .col-name { word-break: break-all; }
+  #reducer #fileTable .col-ch, #reducer #fileTable .col-dur { white-space: nowrap; text-align: right; }
 </style>
 
 <div id="reducer">
 
-    <!-- FILE DROP -->
-    <div class="drop-zone" id="dropZone">
-        <h2 id="dropLabel">add .wav files to reduce</h2>
-        <input type="file" id="fileInput" accept=".wav,.aif,.aiff,audio/*" multiple style="display:none">
-    </div>
-
-    <!-- FILE INFO -->
-    <div id="fileInfo" class="hidden"></div>
-
-    <!-- CONTROLS -->
-    <div id="controls" class="hidden">
-
-        <!-- PRESETS -->
-        <div class="section">
-            <div class="row">
-                <p class="row-label">starters</p>
-                <button class="svg-toggle off" id="starterToggleBtn" aria-label="toggle starters">
-                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#tc)">
-                            <!-- OFF state -->
-                            <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
-                            <!-- ON state -->
-                            <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
-                        </g>
-                        <defs>
-                            <clipPath id="tc">
-                                <rect width="100" height="100"/>
-                            </clipPath>
-                        </defs>
-                    </svg>
-                </button>
-            </div>
-            <div class="collapsible hidden" id="presetControls">
-                <div class="row" style="margin-bottom:16px;">
-                    <div class="seg" id="preset">
-                        <button class="preset-btn btn" data-preset="telephone">telephone</button>
-                        <button class="preset-btn btn" data-preset="gameboy">gameboy</button>
-                        <button class="preset-btn btn" data-preset="soviet">soviet</button>
-                        <button class="preset-btn btn" data-preset="cassette">cassette</button>
-                        <button class="preset-btn btn" data-preset="transistor">transistor_radio</button>
-                        <button class="preset-btn btn" data-preset="fieldrecorder">field_recorder</button>
-                        <button class="preset-btn btn" data-preset="destroyed">destroyed</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PRE FILTER -->
-        <div class="section">
-            <div class="row">
-                <p class="row-label">Pre Filter</p>
-                <button class="svg-toggle off" id="filterToggleBtn" aria-label="toggle pre filter">
-                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#tc)">
-                            <!-- OFF state -->
-                            <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
-                            <!-- ON state -->
-                            <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
-                        </g>
-                        <defs>
-                            <clipPath id="tc">
-                                <rect width="100" height="100"/>
-                            </clipPath>
-                        </defs>
-                    </svg>
-                </button>
-            </div>
-            <div class="collapsible hidden" id="filterControls">
-                <div class="row" style="margin-bottom:16px;">
-                    <div class="seg" id="filterModelSeg">
-                        <button class="btn active" data-val="butterworth">flat</button>
-                        <button class="btn" data-val="chebyshev">chebyshev_i</button>
-                        <button class="btn" data-val="moog">moog_ladder</button>
-                    </div>
-                </div>
-                <div class="row">
-                    <p class="row-label">low-pass</p>
-                    <div class="slider-wrap">
-                        <input type="range" id="filterLP" min="0" max="1000" value="1000">
-                    </div>
-                    <span class="val" id="filterLPVal">off</span>
-                </div>
-                <div class="row">
-                    <p class="row-label">resonance</p>
-                    <div class="slider-wrap">
-                        <input type="range" id="filterRes" min="0" max="100" value="0">
-                    </div>
-                    <span class="val" id="filterResVal">0</span>
-                </div>
-                <div class="row">
-                    <p class="row-label">high-pass</p>
-                    <div class="slider-wrap">
-                        <input type="range" id="filterHP" min="0" max="1000" value="0">
-                    </div>
-                    <span class="val" id="filterHPVal">off</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- REDUCTION -->
-        <div class="section">
-            <div class="row" id="rowCD" style="margin-top:14px;">
-                <div class="seg" id="codecSeg">
-                    <button class="btn" data-val="nearest">nearest</button>
-                    <button class="btn active" data-val="linear">linear</button>
-                    <button class="btn" data-val="polyphase">polyphase</button>
-                    <button class="btn" data-val="mulaw">mu-law</button>
-                    <button class="btn" data-val="adpcm">ADPCM</button>
-                    <button class="btn" data-val="deltasigma">delta-sigma</button>
-                </div>
-            </div>
-
-            <div class="row" id="rowSR" style="margin-top:14px;">
-                <p class="row-label">sample rate</p>
-                <div class="slider-wrap">
-                    <input type="range" id="sampleRate" min="0" max="1000" value="1000">
-                </div>
-                <span class="val" id="sampleRateVal">48 kHz</span>
-            </div>
-            <div class="row" id="rowBD">
-                <p class="row-label">bit depth</p>
-                <div class="slider-wrap">
-                    <input type="range" id="bitDepth" min="16" max="32" value="32" step="1">
-                </div>
-                <span class="val" id="bitDepthVal">32-bit</span>
-            </div>
-            <div class="row">
-                <div class="ch-toggle">
-                    <button class="ch-btn" id="btnStereo">stereo</button>
-                    <button class="ch-btn active" id="btnMono">mono</button>
-                </div>
-            </div>
-            <div class="row">
-                <p class="row-label">dithering</p>
-                <button class="svg-toggle on" id="ditherBtn" aria-label="toggle dithering">
-                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#dc)">
-                            <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
-                            <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
-                        </g>
-                        <defs>
-                            <clipPath id="dc">
-                                <rect width="100" height="100"/>
-                            </clipPath>
-                        </defs>
-                    </svg>
-                </button>
-            </div>
-            <div class="row">
-                <p class="row-label">bypass</p>
-                <button class="svg-toggle off" id="bypassBtn" aria-label="toggle bypass">
-                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#tc)">
-                            <!-- OFF state -->
-                            <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
-                            <!-- ON state -->
-                            <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
-                            <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
-                        </g>
-                        <defs>
-                            <clipPath id="tc">
-                                <rect width="100" height="100"/>
-                            </clipPath>
-                        </defs>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <div class="actions">
-            <button id="previewBtn" disabled>
-                <span class="preview-icon">
-                    <svg viewBox="0 0 80 160" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M28.2274 103.552C25.657 103.552 23.5518 105.657 23.5518 108.227V131.769C23.5518 134.339 25.657 136.444 28.2274 136.444H51.7688C54.3426 136.444 56.4445 134.339 56.4445 131.769V108.227C56.4445 105.657 54.3392 103.552 51.7688 103.552H28.2274Z"/>
-                        <path d="M54.0392 42.1406L34.1602 54.2886C32.6094 55.2378 30.6602 54.0503 30.6602 52.148V27.847C30.6602 25.9486 32.6094 24.7572 34.1602 25.7064L54.0392 37.8544C55.5978 38.8036 55.5978 41.1825 54.0392 42.1356V42.1406Z"/>
-                    </svg>
-                </span>
-                <span class="preview-label">preview</span>
-            </button>
-        </div>
-        <h2 id="totalReduction" style="display:none;margin-top:20px;"></h2>
-
-        <div id="fileTable-wrap" class="hidden">
-            <table id="fileTable">
-                <tbody id="fileTableBody"></tbody>
-            </table>
-        </div>
-
-        <div style="text-align:center;margin-top:28px;">
-            <button id="downloadBtn" disabled>reduce all</button>
-        </div>
-
-        <div class="notice" id="srNotice" style="display:none">
-            <h3>sample rate reduction may take a moment on longer files</h3>
-        </div>
-        <div id="status"></div>
-
-    </div>
-    <!-- /controls -->
+<!-- FILE DROP -->
+<div class="drop-zone" id="dropZone">
+  <h2 id="dropLabel">add .wav files to reduce</h2>
+  <input type="file" id="fileInput" accept=".wav,.aif,.aiff,audio/*" multiple style="display:none">
 </div>
-<!-- /reducer -->
+
+<!-- FILE INFO -->
+<div id="fileInfo" class="hidden"></div>
+
+<!-- CONTROLS -->
+<div id="controls" class="hidden">
+
+<!-- PRESETS -->
+<div class="section">
+  <div class="row">
+    <p class="row-label">starters</p>
+    <button class="svg-toggle off" id="starterToggleBtn" aria-label="toggle starters">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#tc)">
+          <!-- OFF state -->
+          <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
+          <!-- ON state -->
+          <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
+        </g>
+        <defs><clipPath id="tc"><rect width="100" height="100"/></clipPath></defs>
+      </svg>
+    </button>
+  </div>
+  <div class="collapsible hidden" id="presetControls">
+    <div class="row" style="margin-bottom:16px;">
+      <div class="seg" id="preset">
+        <button class="preset-btn btn" data-preset="telephone">telephone</button>
+        <button class="preset-btn btn" data-preset="gameboy">gameboy</button>
+        <button class="preset-btn btn" data-preset="soviet">soviet</button>
+        <button class="preset-btn btn" data-preset="cassette">cassette</button>
+        <button class="preset-btn btn" data-preset="transistor">transistor_radio</button>
+        <button class="preset-btn btn" data-preset="fieldrecorder">field_recorder</button>
+        <button class="preset-btn btn" data-preset="destroyed">destroyed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRE FILTER -->
+<div class="section">
+  <div class="row">
+    <p class="row-label">Pre Filter</p>
+    <button class="svg-toggle off" id="filterToggleBtn" aria-label="toggle pre filter">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#tc)">
+          <!-- OFF state -->
+          <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
+          <!-- ON state -->
+          <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
+        </g>
+        <defs><clipPath id="tc"><rect width="100" height="100"/></clipPath></defs>
+      </svg>
+    </button>
+  </div>
+  <div class="collapsible hidden" id="filterControls">
+    <div class="row" style="margin-bottom:16px;">
+      <div class="seg" id="filterModelSeg">
+        <button class="btn active" data-val="butterworth">flat</button>
+        <button class="btn" data-val="chebyshev">chebyshev_i</button>
+        <button class="btn" data-val="moog">moog_ladder</button>
+      </div>
+    </div>
+    <div class="row">
+      <p class="row-label">low-pass</p>
+      <div class="slider-wrap">
+        <input type="range" id="filterLP" min="0" max="1000" value="1000">
+      </div>
+      <span class="val" id="filterLPVal">off</span>
+    </div>
+    <div class="row">
+      <p class="row-label">resonance</p>
+      <div class="slider-wrap"><input type="range" id="filterRes" min="0" max="100" value="0"></div>
+      <span class="val" id="filterResVal">0</span>
+    </div>
+    <div class="row">
+      <p class="row-label">high-pass</p>
+      <div class="slider-wrap">
+        <input type="range" id="filterHP" min="0" max="1000" value="0">
+      </div>
+      <span class="val" id="filterHPVal">off</span>
+    </div>
+  </div>
+</div>
+
+<!-- REDUCTION -->
+<div class="section">
+  <div class="row" id="rowCD" style="margin-top:14px;">
+    <div class="seg" id="codecSeg">
+      <button class="btn" data-val="nearest">nearest</button>
+      <button class="btn active" data-val="linear">linear</button>
+      <button class="btn" data-val="polyphase">polyphase</button>
+      <button class="btn" data-val="mulaw">mu-law</button>
+      <button class="btn" data-val="adpcm">ADPCM</button>
+      <button class="btn" data-val="deltasigma">delta-sigma</button>
+    </div>
+  </div>
+
+  <div class="row" id="rowSR" style="margin-top:14px;">
+    <p class="row-label">sample rate</p>
+    <div class="slider-wrap">
+      <input type="range" id="sampleRate" min="0" max="1000" value="1000">
+    </div>
+    <span class="val" id="sampleRateVal">48 kHz</span>
+  </div>
+  <div class="row" id="rowBD">
+    <p class="row-label">bit depth</p>
+    <div class="slider-wrap">
+      <input type="range" id="bitDepth" min="16" max="32" value="32" step="1">
+    </div>
+    <span class="val" id="bitDepthVal">32-bit</span>
+  </div>
+  <div class="row">
+    <div class="ch-toggle">
+      <button class="ch-btn" id="btnStereo">stereo</button>
+      <button class="ch-btn active" id="btnMono">mono</button>
+    </div>
+  </div>
+  <div class="row">
+    <p class="row-label">dithering</p>
+    <button class="svg-toggle on" id="ditherBtn" aria-label="toggle dithering">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#dc)">
+          <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
+          <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
+        </g>
+        <defs><clipPath id="dc"><rect width="100" height="100"/></clipPath></defs>
+      </svg>
+    </button>
+  </div>
+  <div class="row">
+    <p class="row-label">bypass</p>
+    <button class="svg-toggle off" id="bypassBtn" aria-label="toggle bypass">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#tc)">
+          <!-- OFF state -->
+          <rect x="0" y="0" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="28" cy="25" r="18" fill="#FFEBD2"/>
+          <!-- ON state -->
+          <rect y="50" width="100" height="50" rx="25" fill="#FC6F2F"/>
+          <circle cx="73" cy="75" r="18" fill="#FFEBD2"/>
+        </g>
+        <defs><clipPath id="tc"><rect width="100" height="100"/></clipPath></defs>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="actions">
+  <button id="previewBtn" disabled><span class="preview-icon"><svg viewBox="0 0 80 160" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M28.2274 103.552C25.657 103.552 23.5518 105.657 23.5518 108.227V131.769C23.5518 134.339 25.657 136.444 28.2274 136.444H51.7688C54.3426 136.444 56.4445 134.339 56.4445 131.769V108.227C56.4445 105.657 54.3392 103.552 51.7688 103.552H28.2274Z"/><path d="M54.0392 42.1406L34.1602 54.2886C32.6094 55.2378 30.6602 54.0503 30.6602 52.148V27.847C30.6602 25.9486 32.6094 24.7572 34.1602 25.7064L54.0392 37.8544C55.5978 38.8036 55.5978 41.1825 54.0392 42.1356V42.1406Z"/></svg></span><span class="preview-label">preview</span></button>
+</div>
+<h2 id="totalReduction" style="display:none;margin-top:20px;"></h2>
+
+<div id="fileTable-wrap" class="hidden">
+  <table id="fileTable">
+    <tbody id="fileTableBody"></tbody>
+  </table>
+</div>
+
+<div style="text-align:center;margin-top:28px;">
+  <button id="downloadBtn" disabled>reduce all</button>
+</div>
+
+<div class="notice" id="srNotice" style="display:none"><h3>sample rate reduction may take a moment on longer files</h3></div>
+<div id="status"></div>
+
+
+</div><!-- /controls -->
+</div><!-- /reducer -->
 
 <script>
-// â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-let files = []; // [{name, baseName, buffer, fileSize}] sorted alphabetically
-let currentFileIdx = -1; // which file is playing / queued
+// ── State ─────────────────────────────────────────────────────────────
+let files = [];           // [{name, baseName, buffer, fileSize}] sorted alphabetically
+let currentFileIdx = -1;  // which file is playing / queued
 let audioCtx = null;
 let previewSource = null;
 let isPlaying = false;
@@ -600,1121 +257,746 @@ let originalBuf = null;
 let playbackStart = 0;
 let processedSR = null;
 
-function getCtx() {
-    if (!audioCtx)
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
 }
 
-// â”€â”€ Scale helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const SR_MIN = Math.log(4000),
-    SR_MAX = Math.log(48000);
-function sliderToSR(v) {
-    return Math.round(Math.exp(SR_MIN + (v / 1000) * (SR_MAX - SR_MIN)));
-}
-function srToSlider(hz) {
-    return Math.round(((Math.log(hz) - SR_MIN) / (SR_MAX - SR_MIN)) * 1000);
-}
-function srLabel(hz) {
-    return (hz / 1000).toFixed(1) + ' kHz';
+// ── Scale helpers ──────────────────────────────────────────────────────
+const SR_MIN=Math.log(4000), SR_MAX=Math.log(48000);
+function sliderToSR(v){return Math.round(Math.exp(SR_MIN+(v/1000)*(SR_MAX-SR_MIN)));}
+function srToSlider(hz){return Math.round(((Math.log(hz)-SR_MIN)/(SR_MAX-SR_MIN))*1000);}
+function srLabel(hz){return (hz/1000).toFixed(1)+' kHz';}
+
+function fileSizeLabel(bytes){
+  const kb=bytes/1024;
+  return kb<1000?kb.toFixed(0)+' KB':(kb/1024).toFixed(1)+' MB';
 }
 
-function fileSizeLabel(bytes) {
-    const kb = bytes / 1024;
-    return kb < 1000 ? kb.toFixed(0) + ' KB' : (kb / 1024).toFixed(1) + ' MB';
+function durLabel(secs){
+  const m=Math.floor(secs/60),s=Math.floor(secs%60);
+  return m>0?`${m}:${String(s).padStart(2,'0')}`:`${secs.toFixed(1)}s`;
 }
 
-function durLabel(secs) {
-    const m = Math.floor(secs / 60),
-        s = Math.floor(secs % 60);
-    return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${secs.toFixed(1)}s`;
+const LP_MIN=Math.log(200), LP_MAX=Math.log(20000);
+const HP_MIN=Math.log(20),  HP_MAX=Math.log(5000);
+function sliderToLP(v){return v>=999?20001:Math.round(Math.exp(LP_MIN+(v/1000)*(LP_MAX-LP_MIN)));}
+function lpToSlider(hz){return hz>20000?1000:Math.round(((Math.log(hz)-LP_MIN)/(LP_MAX-LP_MIN))*1000);}
+function sliderToHP(v){return v<=1?0:Math.round(Math.exp(HP_MIN+(v/1000)*(HP_MAX-HP_MIN)));}
+function hpToSlider(hz){return hz<=0?0:Math.round(((Math.log(hz)-HP_MIN)/(HP_MAX-HP_MIN))*1000);}
+function fcLabel(hz,isHP){
+  if(!isHP&&hz>20000)return 'off';
+  if(isHP&&hz<=0)return 'off';
+  return hz>=1000?(hz/1000).toFixed(1).replace(/\.0$/,'')+' kHz':hz+' Hz';
 }
 
-const LP_MIN = Math.log(200),
-    LP_MAX = Math.log(20000);
-const HP_MIN = Math.log(20),
-    HP_MAX = Math.log(5000);
-function sliderToLP(v) {
-    return v >= 999 ? 20001 : Math.round(Math.exp(LP_MIN + (v / 1000) * (LP_MAX - LP_MIN)));
-}
-function lpToSlider(hz) {
-    return hz > 20000 ? 1000 : Math.round(((Math.log(hz) - LP_MIN) / (LP_MAX - LP_MIN)) * 1000);
-}
-function sliderToHP(v) {
-    return v <= 1 ? 0 : Math.round(Math.exp(HP_MIN + (v / 1000) * (HP_MAX - HP_MIN)));
-}
-function hpToSlider(hz) {
-    return hz <= 0 ? 0 : Math.round(((Math.log(hz) - HP_MIN) / (HP_MAX - HP_MIN)) * 1000);
-}
-function fcLabel(hz, isHP) {
-    if (!isHP && hz > 20000)
-        return 'off';
-    if (isHP && hz <= 0)
-        return 'off';
-    return hz >= 1000 ? (hz / 1000).toFixed(1).replace(/\.0$/, '') + ' kHz' : hz + ' Hz';
+// ── Codec UI ───────────────────────────────────────────────────────────
+const CODEC_HIDE_BD=['mulaw','adpcm','deltasigma'];
+function applyCodecUI(){
+  document.getElementById('rowBD').classList.toggle('hidden',CODEC_HIDE_BD.includes(codec));
 }
 
-// â”€â”€ Codec UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const CODEC_HIDE_BD = ['mulaw', 'adpcm', 'deltasigma'];
-function applyCodecUI() {
-    document.getElementById('rowBD').classList.toggle('hidden', CODEC_HIDE_BD.includes(codec));
+// ── SVG Toggle helper ──────────────────────────────────────────────────
+function setSvgToggle(btn,state){
+  btn.classList.toggle('on',state);
+  btn.classList.toggle('off',!state);
 }
 
-// â”€â”€ SVG Toggle helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function setSvgToggle(btn, state) {
-    btn.classList.toggle('on', state);
-    btn.classList.toggle('off', !state);
+// ── Preset active state ────────────────────────────────────────────────
+function clearPresetActive(){
+  if(!activePreset)return;
+  activePreset=null;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
 }
 
-// â”€â”€ Preset active state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function clearPresetActive() {
-    if (!activePreset)
-        return;
-    activePreset = null;
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-}
-
-// â”€â”€ Seg controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function setupSeg(segId, onChange) {
-    document.getElementById(segId).querySelectorAll('.btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById(segId).querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            onChange(btn.dataset.val);
-        });
+// ── Seg controls ───────────────────────────────────────────────────────
+function setupSeg(segId,onChange){
+  document.getElementById(segId).querySelectorAll('.btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.getElementById(segId).querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn.dataset.val);
     });
+  });
 }
-setupSeg('filterModelSeg', val => {
-    filterModel = val;
-    clearPresetActive();
+setupSeg('filterModelSeg',val=>{filterModel=val;clearPresetActive();});
+setupSeg('codecSeg',val=>{codec=val;applyCodecUI();clearPresetActive();updateTotalReduction();});
+
+// ── Toggle handlers ────────────────────────────────────────────────────
+document.getElementById('starterToggleBtn').addEventListener('click',()=>{
+  starterOpen=!starterOpen;
+  setSvgToggle(document.getElementById('starterToggleBtn'),starterOpen);
+  document.getElementById('presetControls').classList.toggle('hidden',!starterOpen);
 });
-setupSeg('codecSeg', val => {
-    codec = val;
-    applyCodecUI();
-    clearPresetActive();
-    updateTotalReduction();
+document.getElementById('filterToggleBtn').addEventListener('click',()=>{
+  filterActive=!filterActive;
+  setSvgToggle(document.getElementById('filterToggleBtn'),filterActive);
+  document.getElementById('filterControls').classList.toggle('hidden',!filterActive);
+  clearPresetActive();
+});
+document.getElementById('ditherBtn').addEventListener('click',()=>{
+  ditherActive=!ditherActive;
+  setSvgToggle(document.getElementById('ditherBtn'),ditherActive);
+  clearPresetActive();
 });
 
-// â”€â”€ Toggle handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-document.getElementById('starterToggleBtn').addEventListener('click', () => {
-    starterOpen = !starterOpen;
-    setSvgToggle(document.getElementById('starterToggleBtn'), starterOpen);
-    document.getElementById('presetControls').classList.toggle('hidden', !starterOpen);
+// ── Slider events ──────────────────────────────────────────────────────
+document.getElementById('sampleRate').addEventListener('input',function(){
+  document.getElementById('sampleRateVal').textContent=srLabel(sliderToSR(parseInt(this.value)));
+  clearPresetActive();
+  updateTotalReduction();
 });
-document.getElementById('filterToggleBtn').addEventListener('click', () => {
-    filterActive = !filterActive;
-    setSvgToggle(document.getElementById('filterToggleBtn'), filterActive);
-    document.getElementById('filterControls').classList.toggle('hidden', !filterActive);
-    clearPresetActive();
+document.getElementById('bitDepth').addEventListener('input',function(){
+  document.getElementById('bitDepthVal').textContent=parseInt(this.value)+'-bit';
+  clearPresetActive();
+  updateTotalReduction();
 });
-document.getElementById('ditherBtn').addEventListener('click', () => {
-    ditherActive = !ditherActive;
-    setSvgToggle(document.getElementById('ditherBtn'), ditherActive);
-    clearPresetActive();
+document.getElementById('filterLP').addEventListener('input',function(){
+  document.getElementById('filterLPVal').textContent=fcLabel(sliderToLP(parseInt(this.value)),false);
+  clearPresetActive();
 });
-
-// â”€â”€ Slider events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-document.getElementById('sampleRate').addEventListener('input', function() {
-    document.getElementById('sampleRateVal').textContent = srLabel(sliderToSR(parseInt(this.value)));
-    clearPresetActive();
-    updateTotalReduction();
+document.getElementById('filterHP').addEventListener('input',function(){
+  document.getElementById('filterHPVal').textContent=fcLabel(sliderToHP(parseInt(this.value)),true);
+  clearPresetActive();
 });
-document.getElementById('bitDepth').addEventListener('input', function() {
-    document.getElementById('bitDepthVal').textContent = parseInt(this.value) + '-bit';
-    clearPresetActive();
-    updateTotalReduction();
+document.getElementById('filterRes').addEventListener('input',function(){
+  document.getElementById('filterResVal').textContent=this.value;
+  clearPresetActive();
 });
-document.getElementById('filterLP').addEventListener('input', function() {
-    document.getElementById('filterLPVal').textContent = fcLabel(sliderToLP(parseInt(this.value)), false);
-    clearPresetActive();
+document.getElementById('btnStereo').addEventListener('click',()=>{
+  monoOutput=false;
+  document.getElementById('btnStereo').classList.add('active');
+  document.getElementById('btnMono').classList.remove('active');
+  clearPresetActive();
+  updateTotalReduction();
 });
-document.getElementById('filterHP').addEventListener('input', function() {
-    document.getElementById('filterHPVal').textContent = fcLabel(sliderToHP(parseInt(this.value)), true);
-    clearPresetActive();
-});
-document.getElementById('filterRes').addEventListener('input', function() {
-    document.getElementById('filterResVal').textContent = this.value;
-    clearPresetActive();
-});
-document.getElementById('btnStereo').addEventListener('click', () => {
-    monoOutput = false;
-    document.getElementById('btnStereo').classList.add('active');
-    document.getElementById('btnMono').classList.remove('active');
-    clearPresetActive();
-    updateTotalReduction();
-});
-document.getElementById('btnMono').addEventListener('click', () => {
-    monoOutput = true;
-    document.getElementById('btnMono').classList.add('active');
-    document.getElementById('btnStereo').classList.remove('active');
-    clearPresetActive();
-    updateTotalReduction();
+document.getElementById('btnMono').addEventListener('click',()=>{
+  monoOutput=true;
+  document.getElementById('btnMono').classList.add('active');
+  document.getElementById('btnStereo').classList.remove('active');
+  clearPresetActive();
+  updateTotalReduction();
 });
 
-// â”€â”€ File loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZone.classList.add('active');
+// ── File loading ───────────────────────────────────────────────────────
+const dropZone=document.getElementById('dropZone');
+const fileInput=document.getElementById('fileInput');
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('active');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('active'));
+dropZone.addEventListener('drop',e=>{
+  e.preventDefault();dropZone.classList.remove('active');
+  handleFiles(Array.from(e.dataTransfer.files));
 });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
-dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('active');
-    handleFiles(Array.from(e.dataTransfer.files));
-});
-fileInput.addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+fileInput.addEventListener('change',e=>handleFiles(Array.from(e.target.files)));
 
-async function handleFiles(incoming) {
-    if (!incoming.length)
-        return;
-    stopPlayback();
-    setStatus('loadingâ€¦');
-    const ctx = getCtx();
+async function handleFiles(incoming){
+  if(!incoming.length)return;
+  stopPlayback();
+  setStatus('loading…');
+  const ctx=getCtx();
 
-    const decoded = await Promise.all(incoming.map(async f => {
-        try {
-            const ab = await f.arrayBuffer();
-            const buffer = await ctx.decodeAudioData(ab);
-            return {
-                name: f.name,
-                baseName: f.name.replace(/\.[^.]+$/, ''),
-                buffer,
-                fileSize: f.size
-            };
-        } catch (e) {
-            setStatus(`could not decode "${f.name}"`);
-            return null;
-        }
-    }));
-
-    // Merge with existing, deduplicate by name, sort alphabetically
-    const merged = [...files];
-    for (const d of decoded) {
-        if (!d)
-            continue;
-        const existing = merged.findIndex(f => f.name === d.name);
-        if (existing >= 0)
-            merged[existing] = d;
-        else
-            merged.push(d);
+  const decoded=await Promise.all(incoming.map(async f=>{
+    try{
+      const ab=await f.arrayBuffer();
+      const buffer=await ctx.decodeAudioData(ab);
+      return {name:f.name, baseName:f.name.replace(/\.[^.]+$/,''), buffer, fileSize:f.size};
+    }catch(e){
+      setStatus(`could not decode "${f.name}"`);
+      return null;
     }
-    merged.sort((a, b) => a.name.localeCompare(b.name));
-    files = merged;
+  }));
 
-    const label = document.getElementById('dropLabel');
-    label.textContent = 'add more .wavs to reduce';
-    label.classList.add('loaded');
-    dropZone.classList.add('loaded');
+  // Merge with existing, deduplicate by name, sort alphabetically
+  const merged=[...files];
+  for(const d of decoded){
+    if(!d)continue;
+    const existing=merged.findIndex(f=>f.name===d.name);
+    if(existing>=0) merged[existing]=d; else merged.push(d);
+  }
+  merged.sort((a,b)=>a.name.localeCompare(b.name));
+  files=merged;
 
-    const totalBytes = files.reduce((a, f) => a + f.fileSize, 0);
-    const fi = document.getElementById('fileInfo');
-    fi.innerHTML = `<h2>${files.length} file${files.length === 1 ? '' : 's'} â€” ${fileSizeLabel(totalBytes)}</h2>`;
-    fi.classList.remove('hidden');
+  const label=document.getElementById('dropLabel');
+  label.textContent='add more .wavs to reduce';
+  label.classList.add('loaded');
+  dropZone.classList.add('loaded');
 
-    document.getElementById('controls').classList.remove('hidden');
-    document.getElementById('previewBtn').disabled = false;
-    document.getElementById('downloadBtn').disabled = false;
-    document.getElementById('srNotice').style.display = 'none';
+  const totalBytes=files.reduce((a,f)=>a+f.fileSize,0);
+  const fi=document.getElementById('fileInfo');
+  fi.innerHTML=`<h2>${files.length} file${files.length===1?'':'s'} — ${fileSizeLabel(totalBytes)}</h2>`;
+  fi.classList.remove('hidden');
 
-    renderTable();
-    setStatus('');
-    updateTotalReduction();
+  document.getElementById('controls').classList.remove('hidden');
+  document.getElementById('previewBtn').disabled=false;
+  document.getElementById('downloadBtn').disabled=false;
+  document.getElementById('srNotice').style.display='none';
+
+  renderTable();
+  setStatus('');
+  updateTotalReduction();
 }
 
-// â”€â”€ File table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function renderTable() {
-    const tbody = document.getElementById('fileTableBody');
-    const wrap = document.getElementById('fileTable-wrap');
-    tbody.innerHTML = '';
-    files.forEach((f, i) => {
-        const ch = f.buffer.numberOfChannels;
-        const tr = document.createElement('tr');
-        tr.dataset.idx = i;
-        const svgBtn = `<button class="row-play-btn" data-idx="${i}" aria-label="play ${f.name}"><svg viewBox="0 0 80 160" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#rpc${i})"><path d="M40 0C17.941 0 0 17.941 0 40C0 62.059 17.941 80 40 80C62.059 80 80 62.059 80 40C80 17.941 62.059 0 40 0ZM54.039 42.141L34.16 54.289C32.6092 55.2382 30.66 54.0507 30.66 52.1484V27.8474C30.66 25.949 32.6092 24.7576 34.16 25.7068L54.039 37.8548C55.5976 38.804 55.5976 41.1829 54.039 42.136V42.141Z" fill="#FC6F2F"/><path fill-rule="evenodd" clip-rule="evenodd" d="M80 120C80 142.091 62.0914 160 40 160C17.912 160 0 142.091 0 120C0 97.9086 17.9086 80 40 80C62.0914 80 80 97.9086 80 120ZM28.2276 103.552C25.6572 103.552 23.5519 105.657 23.5519 108.227V131.769C23.5519 134.339 25.6572 136.445 28.2276 136.445H51.769C54.3428 136.445 56.4446 134.339 56.4446 131.769V108.227C56.4446 105.657 54.3394 103.552 51.769 103.552H28.2276Z" fill="#FFEBD2"/><defs><clipPath id="rpc${i}"><rect width="80" height="160"/></clipPath></defs></g></svg></button>`;
-        tr.innerHTML =
-        `<td>${svgBtn}</td>` +
-        `<td class="col-name">${f.name}</td>` +
-        `<td class="col-dur">${durLabel(f.buffer.duration)}</td>`;
-        tbody.appendChild(tr);
+// ── File table ─────────────────────────────────────────────────────────
+function renderTable(){
+  const tbody=document.getElementById('fileTableBody');
+  const wrap=document.getElementById('fileTable-wrap');
+  tbody.innerHTML='';
+  files.forEach((f,i)=>{
+    const ch=f.buffer.numberOfChannels;
+    const tr=document.createElement('tr');
+    tr.dataset.idx=i;
+    const svgBtn=`<button class="row-play-btn" data-idx="${i}" aria-label="play ${f.name}"><svg viewBox="0 0 80 160" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#rpc${i})"><path d="M40 0C17.941 0 0 17.941 0 40C0 62.059 17.941 80 40 80C62.059 80 80 62.059 80 40C80 17.941 62.059 0 40 0ZM54.039 42.141L34.16 54.289C32.6092 55.2382 30.66 54.0507 30.66 52.1484V27.8474C30.66 25.949 32.6092 24.7576 34.16 25.7068L54.039 37.8548C55.5976 38.804 55.5976 41.1829 54.039 42.136V42.141Z" fill="#FC6F2F"/><path fill-rule="evenodd" clip-rule="evenodd" d="M80 120C80 142.091 62.0914 160 40 160C17.912 160 0 142.091 0 120C0 97.9086 17.9086 80 40 80C62.0914 80 80 97.9086 80 120ZM28.2276 103.552C25.6572 103.552 23.5519 105.657 23.5519 108.227V131.769C23.5519 134.339 25.6572 136.445 28.2276 136.445H51.769C54.3428 136.445 56.4446 134.339 56.4446 131.769V108.227C56.4446 105.657 54.3394 103.552 51.769 103.552H28.2276Z" fill="#FFEBD2"/><defs><clipPath id="rpc${i}"><rect width="80" height="160"/></clipPath></defs></g></svg></button>`;
+    tr.innerHTML=
+      `<td>${svgBtn}</td>`+
+      `<td class="col-name">${f.name}</td>`+
+      `<td class="col-dur">${durLabel(f.buffer.duration)}</td>`;
+    tbody.appendChild(tr);
+  });
+  wrap.classList.remove('hidden');
+
+  // Row play buttons
+  tbody.querySelectorAll('.row-play-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.dataset.idx);
+      if(isPlaying&&currentFileIdx===idx){
+        stopPlayback();
+      } else {
+        stopPlayback();
+        playQueued=false;
+        playFile(idx);
+      }
     });
-    wrap.classList.remove('hidden');
-
-    // Row play buttons
-    tbody.querySelectorAll('.row-play-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const idx = parseInt(btn.dataset.idx);
-            if (isPlaying && currentFileIdx === idx) {
-                stopPlayback();
-            } else {
-                stopPlayback();
-                playQueued = false;
-                playFile(idx);
-            }
-        });
-    });
+  });
 }
 
-function setRowPlaying(idx) {
-    document.querySelectorAll('#fileTableBody tr').forEach((tr, i) => {
-        const playing = i === idx;
-        tr.classList.toggle('playing', playing);
-        const btn = tr.querySelector('.row-play-btn');
-        if (btn)
-            btn.classList.toggle('playing', playing);
-    });
+function setRowPlaying(idx){
+  document.querySelectorAll('#fileTableBody tr').forEach((tr,i)=>{
+    const playing=i===idx;
+    tr.classList.toggle('playing',playing);
+    const btn=tr.querySelector('.row-play-btn');
+    if(btn) btn.classList.toggle('playing',playing);
+  });
 }
 
-function clearRowPlaying() {
-    document.querySelectorAll('#fileTableBody tr').forEach(tr => {
-        tr.classList.remove('playing');
-        const btn = tr.querySelector('.row-play-btn');
-        if (btn)
-            btn.classList.remove('playing');
-    });
+function clearRowPlaying(){
+  document.querySelectorAll('#fileTableBody tr').forEach(tr=>{
+    tr.classList.remove('playing');
+    const btn=tr.querySelector('.row-play-btn');
+    if(btn) btn.classList.remove('playing');
+  });
 }
 
-// â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function getSettings() {
-    return {
-        targetSR: sliderToSR(parseInt(document.getElementById('sampleRate').value)),
-        bits: parseInt(document.getElementById('bitDepth').value),
-        useDither: ditherActive,
-        lpCutoff: sliderToLP(parseInt(document.getElementById('filterLP').value)),
-        hpCutoff: sliderToHP(parseInt(document.getElementById('filterHP').value)),
-        filterRes: parseInt(document.getElementById('filterRes').value),
-        filterModel,
-        codec,
-        filterActive,
-    };
+// ── Settings ───────────────────────────────────────────────────────────
+function getSettings(){
+  return {
+    targetSR: sliderToSR(parseInt(document.getElementById('sampleRate').value)),
+    bits: parseInt(document.getElementById('bitDepth').value),
+    useDither: ditherActive,
+    lpCutoff: sliderToLP(parseInt(document.getElementById('filterLP').value)),
+    hpCutoff: sliderToHP(parseInt(document.getElementById('filterHP').value)),
+    filterRes: parseInt(document.getElementById('filterRes').value),
+    filterModel, codec, filterActive,
+  };
 }
 
-// â”€â”€ DSP: Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function runBiquad(s, b0, b1, b2, a1, a2) {
-    const out = new Float32Array(s.length);
-    let z1 = 0,
-        z2 = 0;
-    for (let i = 0; i < s.length; i++) {
-        const x = s[i],
-            y = b0 * x + z1;
-        z1 = b1 * x - a1 * y + z2;
-        z2 = b2 * x - a2 * y;
-        out[i] = y;
-    }
-    return out;
+// ── DSP: Filters ───────────────────────────────────────────────────────
+function runBiquad(s,b0,b1,b2,a1,a2){
+  const out=new Float32Array(s.length);let z1=0,z2=0;
+  for(let i=0;i<s.length;i++){const x=s[i],y=b0*x+z1;z1=b1*x-a1*y+z2;z2=b2*x-a2*y;out[i]=y;}
+  return out;
 }
-function butterworth(s, type, cutoffHz, sr, Q) {
-    const f = Math.min(cutoffHz / sr, 0.499),
-        K = Math.tan(Math.PI * f),
-        norm = 1 / (1 + K / Q + K * K);
-    let b0,
-        b1,
-        b2;
-    if (type === 'lp') {
-        b0 = K * K * norm;
-        b1 = 2 * b0;
-        b2 = b0;
-    } else {
-        b0 = norm;
-        b1 = -2 * norm;
-        b2 = norm;
-    }
-    return runBiquad(s, b0, b1, b2, 2 * (K * K - 1) * norm, (1 - K / Q + K * K) * norm);
+function butterworth(s,type,cutoffHz,sr,Q){
+  const f=Math.min(cutoffHz/sr,0.499),K=Math.tan(Math.PI*f),norm=1/(1+K/Q+K*K);
+  let b0,b1,b2;
+  if(type==='lp'){b0=K*K*norm;b1=2*b0;b2=b0;}else{b0=norm;b1=-2*norm;b2=norm;}
+  return runBiquad(s,b0,b1,b2,2*(K*K-1)*norm,(1-K/Q+K*K)*norm);
 }
-function chebyshev1(s, type, cutoffHz, sr, Q) {
-    const eps = Math.sqrt(Math.pow(10, 0.05) - 1);
-    const f = Math.min(cutoffHz / sr, 0.499),
-        K = Math.tan(Math.PI * f) / Math.sqrt(eps);
-    const norm = 1 / (1 + K / Q + K * K);
-    let b0,
-        b1,
-        b2;
-    if (type === 'lp') {
-        b0 = K * K * norm;
-        b1 = 2 * b0;
-        b2 = b0;
-    } else {
-        b0 = norm;
-        b1 = -2 * norm;
-        b2 = norm;
-    }
-    return runBiquad(s, b0, b1, b2, 2 * (K * K - 1) * norm, (1 - K / Q + K * K) * norm);
+function chebyshev1(s,type,cutoffHz,sr,Q){
+  const eps=Math.sqrt(Math.pow(10,0.05)-1);
+  const f=Math.min(cutoffHz/sr,0.499),K=Math.tan(Math.PI*f)/Math.sqrt(eps);
+  const norm=1/(1+K/Q+K*K);
+  let b0,b1,b2;
+  if(type==='lp'){b0=K*K*norm;b1=2*b0;b2=b0;}else{b0=norm;b1=-2*norm;b2=norm;}
+  return runBiquad(s,b0,b1,b2,2*(K*K-1)*norm,(1-K/Q+K*K)*norm);
 }
-function moogLadder(s, type, cutoffHz, sr, Q) {
-    const f = Math.min(cutoffHz / sr, 0.499),
-        fc = f * 1.16,
-        res = Math.min(Q * 0.1, 0.95);
-    let x = [0, 0, 0, 0],
-        y = [0, 0, 0, 0];
-    const out = new Float32Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        const inp = s[i] - res * y[3];
-        x[0] = inp;
-        y[0] += (Math.tanh(x[0] * 1.8) - Math.tanh(y[0] * 1.8)) * fc;
-        for (let k = 1; k < 4; k++)
-            y[k] += (Math.tanh(y[k - 1] * 1.8) - Math.tanh(y[k] * 1.8)) * fc;
-        out[i] = type === 'lp' ? y[3] : s[i] - y[3];
-    }
-    return out;
+function moogLadder(s,type,cutoffHz,sr,Q){
+  const f=Math.min(cutoffHz/sr,0.499),fc=f*1.16,res=Math.min(Q*0.1,0.95);
+  let x=[0,0,0,0],y=[0,0,0,0];
+  const out=new Float32Array(s.length);
+  for(let i=0;i<s.length;i++){
+    const inp=s[i]-res*y[3];x[0]=inp;
+    y[0]+=(Math.tanh(x[0]*1.8)-Math.tanh(y[0]*1.8))*fc;
+    for(let k=1;k<4;k++)y[k]+=(Math.tanh(y[k-1]*1.8)-Math.tanh(y[k]*1.8))*fc;
+    out[i]=type==='lp'?y[3]:s[i]-y[3];
+  }
+  return out;
 }
-function applyFilter(s, type, cutoffHz, sr, Q, model) {
-    if (type === 'lp' && cutoffHz > sr / 2)
-        return s;
-    if (type === 'hp' && cutoffHz <= 0)
-        return s;
-    const safeQ = Math.max(0.5, Q);
-    if (model === 'chebyshev')
-        return chebyshev1(s, type, cutoffHz, sr, safeQ);
-    if (model === 'moog')
-        return moogLadder(s, type, cutoffHz, sr, safeQ);
-    return butterworth(s, type, cutoffHz, sr, safeQ);
+function applyFilter(s,type,cutoffHz,sr,Q,model){
+  if(type==='lp'&&cutoffHz>sr/2)return s;
+  if(type==='hp'&&cutoffHz<=0)return s;
+  const safeQ=Math.max(0.5,Q);
+  if(model==='chebyshev')return chebyshev1(s,type,cutoffHz,sr,safeQ);
+  if(model==='moog')return moogLadder(s,type,cutoffHz,sr,safeQ);
+  return butterworth(s,type,cutoffHz,sr,safeQ);
 }
 
-// â”€â”€ DSP: Resamplers & Codecs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function buildSincKernel(cutoff, taps) {
-    const h = new Float32Array(taps),
-        half = (taps - 1) / 2;
-    let sum = 0;
-    for (let i = 0; i < taps; i++) {
-        const x = i - half;
-        h[i] = x === 0 ? 2 * cutoff : Math.sin(2 * Math.PI * cutoff * x) / (Math.PI * x);
-        h[i] *= 0.5 * (1 - Math.cos(2 * Math.PI * i / (taps - 1)));
-        sum += h[i];
-    }
-    for (let i = 0; i < taps; i++)
-        h[i] /= sum;
-    return h;
+// ── DSP: Resamplers & Codecs ───────────────────────────────────────────
+function buildSincKernel(cutoff,taps){
+  const h=new Float32Array(taps),half=(taps-1)/2;let sum=0;
+  for(let i=0;i<taps;i++){
+    const x=i-half;
+    h[i]=x===0?2*cutoff:Math.sin(2*Math.PI*cutoff*x)/(Math.PI*x);
+    h[i]*=0.5*(1-Math.cos(2*Math.PI*i/(taps-1)));sum+=h[i];
+  }
+  for(let i=0;i<taps;i++)h[i]/=sum;return h;
 }
-function applyFIR(s, k) {
-    const t = k.length,
-        h = Math.floor(t / 2),
-        out = new Float32Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        let a = 0;
-        for (let j = 0; j < t; j++) {
-            const idx = i + j - h;
-            if (idx >= 0 && idx < s.length)
-                a += s[idx] * k[j];
-        }
-        out[i] = a;
-    }
-    return out;
+function applyFIR(s,k){
+  const t=k.length,h=Math.floor(t/2),out=new Float32Array(s.length);
+  for(let i=0;i<s.length;i++){
+    let a=0;for(let j=0;j<t;j++){const idx=i+j-h;if(idx>=0&&idx<s.length)a+=s[idx]*k[j];}
+    out[i]=a;
+  }
+  return out;
 }
-function resampleNearest(s, ratio) {
-    const n = Math.max(1, Math.floor(s.length / ratio)),
-        out = new Float32Array(n);
-    for (let i = 0; i < n; i++)
-        out[i] = s[Math.min(Math.round(i * ratio), s.length - 1)];
-    return out;
+function resampleNearest(s,ratio){
+  const n=Math.max(1,Math.floor(s.length/ratio)),out=new Float32Array(n);
+  for(let i=0;i<n;i++)out[i]=s[Math.min(Math.round(i*ratio),s.length-1)];
+  return out;
 }
-function resampleLinear(s, ratio) {
-    const n = Math.max(1, Math.floor(s.length / ratio)),
-        out = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-        const p = i * ratio,
-            lo = Math.floor(p),
-            hi = Math.min(lo + 1, s.length - 1);
-        out[i] = s[lo] * (1 - (p - lo)) + s[hi] * (p - lo);
-    }
-    return out;
+function resampleLinear(s,ratio){
+  const n=Math.max(1,Math.floor(s.length/ratio)),out=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const p=i*ratio,lo=Math.floor(p),hi=Math.min(lo+1,s.length-1);
+    out[i]=s[lo]*(1-(p-lo))+s[hi]*(p-lo);
+  }
+  return out;
 }
-function resamplePolyphase(s, inputSR, targetSR) {
-    const ratio = inputSR / targetSR;
-    if (Math.abs(ratio - 1) < 0.001)
-        return Float32Array.from(s);
-    if (ratio < 1)
-        return resampleLinear(s, ratio);
-    const cutoff = 0.5 / ratio,
-        numTaps = Math.min(255, Math.floor(ratio) * 32 + 1);
-    const taps = numTaps % 2 === 0 ? numTaps + 1 : numTaps;
-    return resampleLinear(applyFIR(s, buildSincKernel(cutoff, taps)), ratio);
+function resamplePolyphase(s,inputSR,targetSR){
+  const ratio=inputSR/targetSR;
+  if(Math.abs(ratio-1)<0.001)return Float32Array.from(s);
+  if(ratio<1)return resampleLinear(s,ratio);
+  const cutoff=0.5/ratio,numTaps=Math.min(255,Math.floor(ratio)*32+1);
+  const taps=numTaps%2===0?numTaps+1:numTaps;
+  return resampleLinear(applyFIR(s,buildSincKernel(cutoff,taps)),ratio);
 }
-function applyMulaw(s, inputSR, targetSR) {
-    const mu = 255,
-        enc = new Float32Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        const sign = s[i] < 0 ? -1 : 1,
-            v = Math.abs(Math.max(-1, Math.min(1, s[i])));
-        enc[i] = sign * Math.log(1 + mu * v) / Math.log(1 + mu);
-    }
-    const q = new Float32Array(s.length);
-    for (let i = 0; i < s.length; i++)
-        q[i] = Math.round(enc[i] * 127) / 127;
-    const down = resampleLinear(q, inputSR / targetSR),
-        out = new Float32Array(down.length);
-    for (let i = 0; i < down.length; i++) {
-        const sign = down[i] < 0 ? -1 : 1,
-            v = Math.abs(down[i]);
-        out[i] = sign * (Math.pow(1 + mu, v) - 1) / mu;
-    }
-    return out;
+function applyMulaw(s,inputSR,targetSR){
+  const mu=255,enc=new Float32Array(s.length);
+  for(let i=0;i<s.length;i++){
+    const sign=s[i]<0?-1:1,v=Math.abs(Math.max(-1,Math.min(1,s[i])));
+    enc[i]=sign*Math.log(1+mu*v)/Math.log(1+mu);
+  }
+  const q=new Float32Array(s.length);
+  for(let i=0;i<s.length;i++)q[i]=Math.round(enc[i]*127)/127;
+  const down=resampleLinear(q,inputSR/targetSR),out=new Float32Array(down.length);
+  for(let i=0;i<down.length;i++){
+    const sign=down[i]<0?-1:1,v=Math.abs(down[i]);
+    out[i]=sign*(Math.pow(1+mu,v)-1)/mu;
+  }
+  return out;
 }
-function applyADPCM(s, inputSR, targetSR) {
-    const stepTable = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552];
-    const indexTable = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
-    let stepIdx = 0,
-        predicted = 0;
-    const encoded = new Int8Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        const step = stepTable[stepIdx];
-        let diff = Math.round(s[i] * 32767) - predicted;
-        let nibble = 0;
-        if (diff < 0) {
-            nibble = 8;
-            diff = -diff;
-        }
-        if (diff >= step) {
-            nibble |= 4;
-            diff -= step;
-        }
-        if (diff >= step / 2) {
-            nibble |= 2;
-            diff -= step / 2;
-        }
-        if (diff >= step / 4) {
-            nibble |= 1;
-        }
-        encoded[i] = nibble;
-        let delta = step >> 3;
-        if (nibble & 4)
-            delta += step;
-        if (nibble & 2)
-            delta += step >> 1;
-        if (nibble & 1)
-            delta += step >> 2;
-        if (nibble & 8)
-            delta = -delta;
-        predicted = Math.max(-32768, Math.min(32767, predicted + delta));
-        stepIdx = Math.max(0, Math.min(56, stepIdx + indexTable[nibble & 7]));
-    }
-    stepIdx = 0;
-    predicted = 0;
-    const decoded = new Float32Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        const nibble = encoded[i],
-            step = stepTable[stepIdx];
-        let delta = step >> 3;
-        if (nibble & 4)
-            delta += step;
-        if (nibble & 2)
-            delta += step >> 1;
-        if (nibble & 1)
-            delta += step >> 2;
-        if (nibble & 8)
-            delta = -delta;
-        predicted = Math.max(-32768, Math.min(32767, predicted + delta));
-        decoded[i] = predicted / 32768;
-        stepIdx = Math.max(0, Math.min(56, stepIdx + indexTable[nibble & 7]));
-    }
-    return resampleLinear(decoded, inputSR / targetSR);
+function applyADPCM(s,inputSR,targetSR){
+  const stepTable=[7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552];
+  const indexTable=[-1,-1,-1,-1,2,4,6,8,-1,-1,-1,-1,2,4,6,8];
+  let stepIdx=0,predicted=0;
+  const encoded=new Int8Array(s.length);
+  for(let i=0;i<s.length;i++){
+    const step=stepTable[stepIdx];let diff=Math.round(s[i]*32767)-predicted;
+    let nibble=0;if(diff<0){nibble=8;diff=-diff;}
+    if(diff>=step){nibble|=4;diff-=step;}if(diff>=step/2){nibble|=2;diff-=step/2;}if(diff>=step/4){nibble|=1;}
+    encoded[i]=nibble;
+    let delta=step>>3;
+    if(nibble&4)delta+=step;if(nibble&2)delta+=step>>1;if(nibble&1)delta+=step>>2;if(nibble&8)delta=-delta;
+    predicted=Math.max(-32768,Math.min(32767,predicted+delta));
+    stepIdx=Math.max(0,Math.min(56,stepIdx+indexTable[nibble&7]));
+  }
+  stepIdx=0;predicted=0;
+  const decoded=new Float32Array(s.length);
+  for(let i=0;i<s.length;i++){
+    const nibble=encoded[i],step=stepTable[stepIdx];
+    let delta=step>>3;
+    if(nibble&4)delta+=step;if(nibble&2)delta+=step>>1;if(nibble&1)delta+=step>>2;if(nibble&8)delta=-delta;
+    predicted=Math.max(-32768,Math.min(32767,predicted+delta));
+    decoded[i]=predicted/32768;
+    stepIdx=Math.max(0,Math.min(56,stepIdx+indexTable[nibble&7]));
+  }
+  return resampleLinear(decoded,inputSR/targetSR);
 }
-function applyDeltaSigma(s, inputSR, targetSR) {
-    const oversampling = Math.max(1, Math.round(inputSR / targetSR));
-    let integrator1 = 0,
-        integrator2 = 0;
-    const bitstream = new Int8Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        const x = Math.max(-0.99, Math.min(0.99, s[i]));
-        const q = integrator2 >= 0 ? 1 : -1;
-        bitstream[i] = q;
-        const err = x - q;
-        integrator2 = integrator1 + err * 0.5;
-        integrator1 += err;
-    }
-    const outLen = Math.max(1, Math.floor(s.length / oversampling)),
-        out = new Float32Array(outLen);
-    for (let i = 0; i < outLen; i++) {
-        let sum = 0,
-            count = 0;
-        for (let j = 0; j < oversampling; j++) {
-            const idx = i * oversampling + j;
-            if (idx < bitstream.length) {
-                sum += bitstream[idx];
-                count++;
-            }
-        }
-        out[i] = count > 0 ? sum / count : 0;
-    }
-    return out;
+function applyDeltaSigma(s,inputSR,targetSR){
+  const oversampling=Math.max(1,Math.round(inputSR/targetSR));
+  let integrator1=0,integrator2=0;
+  const bitstream=new Int8Array(s.length);
+  for(let i=0;i<s.length;i++){
+    const x=Math.max(-0.99,Math.min(0.99,s[i]));
+    const q=integrator2>=0?1:-1;bitstream[i]=q;
+    const err=x-q;integrator2=integrator1+err*0.5;integrator1+=err;
+  }
+  const outLen=Math.max(1,Math.floor(s.length/oversampling)),out=new Float32Array(outLen);
+  for(let i=0;i<outLen;i++){
+    let sum=0,count=0;
+    for(let j=0;j<oversampling;j++){const idx=i*oversampling+j;if(idx<bitstream.length){sum+=bitstream[idx];count++;}}
+    out[i]=count>0?sum/count:0;
+  }
+  return out;
 }
-function quantise(s, bits, dither) {
-    if (bits >= 32)
-        return s;
-    const scale = Math.pow(2, bits - 1);
-    const out = new Float32Array(s.length);
-    for (let i = 0; i < s.length; i++) {
-        let v = s[i];
-        if (dither)
-            v += (Math.random() + Math.random() - 1) / scale;
-        out[i] = Math.max(-1, Math.min(1, Math.round(v * scale) / scale));
-    }
-    return out;
+function quantise(s,bits,dither){
+  if(bits>=32)return s;
+  const scale=Math.pow(2,bits-1);
+  const out=new Float32Array(s.length);
+  for(let i=0;i<s.length;i++){
+    let v=s[i];
+    if(dither) v+=(Math.random()+Math.random()-1)/scale;
+    out[i]=Math.max(-1,Math.min(1,Math.round(v*scale)/scale));
+  }
+  return out;
 }
 
-// â”€â”€ Main process â€” operates on a given AudioBuffer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function getChannelsFrom(buffer) {
-    const numCh = buffer.numberOfChannels;
-    if (monoOutput && numCh > 1) {
-        const len = buffer.length,
-            mono = new Float32Array(len);
-        for (let c = 0; c < numCh; c++) {
-            const ch = buffer.getChannelData(c);
-            for (let i = 0; i < len; i++)
-                mono[i] += ch[i];
-        }
-        for (let i = 0; i < mono.length; i++)
-            mono[i] /= numCh;
-        return [mono];
+// ── Main process — operates on a given AudioBuffer ────────────────────
+function getChannelsFrom(buffer){
+  const numCh=buffer.numberOfChannels;
+  if(monoOutput&&numCh>1){
+    const len=buffer.length,mono=new Float32Array(len);
+    for(let c=0;c<numCh;c++){const ch=buffer.getChannelData(c);for(let i=0;i<len;i++)mono[i]+=ch[i];}
+    for(let i=0;i<mono.length;i++)mono[i]/=numCh;
+    return [mono];
+  }
+  const out=[];
+  for(let c=0;c<numCh;c++)out.push(Float32Array.from(buffer.getChannelData(c)));
+  return out;
+}
+
+function processBuffer(buffer,settings){
+  const {targetSR,bits,useDither,lpCutoff,hpCutoff,filterRes,codec,filterActive}=settings;
+  const inputSR=buffer.sampleRate;
+  const Q=0.707+(filterRes/100)*9;
+  const model=settings.filterModel;
+  const channels=getChannelsFrom(buffer);
+  const processed=[];
+  for(const raw of channels){
+    let s=Float32Array.from(raw);
+    if(filterActive){
+      if(lpCutoff<=inputSR/2) s=applyFilter(s,'lp',lpCutoff,inputSR,Q,model);
+      if(hpCutoff>0&&hpCutoff<inputSR/2) s=applyFilter(s,'hp',hpCutoff,inputSR,Q,'butterworth');
     }
-    const out = [];
-    for (let c = 0; c < numCh; c++)
-        out.push(Float32Array.from(buffer.getChannelData(c)));
-    return out;
-}
-
-function processBuffer(buffer, settings) {
-    const {targetSR, bits, useDither, lpCutoff, hpCutoff, filterRes, codec, filterActive} = settings;
-    const inputSR = buffer.sampleRate;
-    const Q = 0.707 + (filterRes / 100) * 9;
-    const model = settings.filterModel;
-    const channels = getChannelsFrom(buffer);
-    const processed = [];
-    for (const raw of channels) {
-        let s = Float32Array.from(raw);
-        if (filterActive) {
-            if (lpCutoff <= inputSR / 2)
-                s = applyFilter(s, 'lp', lpCutoff, inputSR, Q, model);
-            if (hpCutoff > 0 && hpCutoff < inputSR / 2)
-                s = applyFilter(s, 'hp', hpCutoff, inputSR, Q, 'butterworth');
-        }
-        switch (codec) {
-        case 'nearest':
-            s = resampleNearest(s, inputSR / targetSR);
-            break;
-        case 'polyphase':
-            s = resamplePolyphase(s, inputSR, targetSR);
-            break;
-        case 'mulaw':
-            s = applyMulaw(s, inputSR, targetSR);
-            break;
-        case 'adpcm':
-            s = applyADPCM(s, inputSR, targetSR);
-            break;
-        case 'deltasigma':
-            s = applyDeltaSigma(s, inputSR, targetSR);
-            break;
-        default:
-            s = resampleLinear(s, inputSR / targetSR);
-            break;
-        }
-        if (!CODEC_HIDE_BD.includes(codec))
-            s = quantise(s, bits, useDither);
-        processed.push(s);
+    switch(codec){
+      case 'nearest':    s=resampleNearest(s,inputSR/targetSR); break;
+      case 'polyphase':  s=resamplePolyphase(s,inputSR,targetSR); break;
+      case 'mulaw':      s=applyMulaw(s,inputSR,targetSR); break;
+      case 'adpcm':      s=applyADPCM(s,inputSR,targetSR); break;
+      case 'deltasigma': s=applyDeltaSigma(s,inputSR,targetSR); break;
+      default:           s=resampleLinear(s,inputSR/targetSR); break;
     }
-    const outSR = codec === 'deltasigma'
-    ? Math.max(1, Math.floor(inputSR / Math.max(1, Math.round(inputSR / targetSR))))
-    : targetSR;
-    return {
-        channels: processed,
-        sr: outSR
-    };
+    if(!CODEC_HIDE_BD.includes(codec)) s=quantise(s,bits,useDither);
+    processed.push(s);
+  }
+  const outSR=codec==='deltasigma'
+    ?Math.max(1,Math.floor(inputSR/Math.max(1,Math.round(inputSR/targetSR))))
+    :targetSR;
+  return {channels:processed, sr:outSR};
 }
 
-// â”€â”€ Controls lock/unlock â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function setControlsDisabled(disabled) {
-    const ids = ['starterToggleBtn', 'filterToggleBtn', 'filterModelSeg', 'filterLP', 'filterRes', 'filterHP',
-    'codecSeg', 'sampleRate', 'bitDepth', 'btnStereo', 'btnMono', 'ditherBtn', 'downloadBtn'];
-    ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el)
-            return;
-        el.querySelectorAll?.('.btn,.ch-btn').forEach(b => b.disabled = disabled);
-        if (el.tagName === 'INPUT' || el.tagName === 'BUTTON')
-            el.disabled = disabled;
-    });
-    document.querySelectorAll('.preset-btn').forEach(b => b.disabled = disabled);
-    document.querySelectorAll('#controls input[type=range]').forEach(el => {
-        el.disabled = disabled;
-    });
+// ── Controls lock/unlock ───────────────────────────────────────────────
+function setControlsDisabled(disabled){
+  const ids=['starterToggleBtn','filterToggleBtn','filterModelSeg','filterLP','filterRes','filterHP',
+    'codecSeg','sampleRate','bitDepth','btnStereo','btnMono','ditherBtn','downloadBtn'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.querySelectorAll?.('.btn,.ch-btn').forEach(b=>b.disabled=disabled);
+    if(el.tagName==='INPUT'||el.tagName==='BUTTON') el.disabled=disabled;
+  });
+  document.querySelectorAll('.preset-btn').forEach(b=>b.disabled=disabled);
+  document.querySelectorAll('#controls input[type=range]').forEach(el=>{el.disabled=disabled;});
 }
 
-// â”€â”€ Playback helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function upsampleForPlayback(channels, fromSR) {
-    const ctx = getCtx();
-    const toSR = ctx.sampleRate;
-    if (Math.abs(fromSR - toSR) < 1)
-        return channels;
-    const ratio = fromSR / toSR;
-    return channels.map(ch => resampleNearest(ch, ratio));
+// ── Playback helpers ───────────────────────────────────────────────────
+function upsampleForPlayback(channels, fromSR){
+  const ctx=getCtx();
+  const toSR=ctx.sampleRate;
+  if(Math.abs(fromSR-toSR)<1) return channels;
+  const ratio=fromSR/toSR;
+  return channels.map(ch=>resampleNearest(ch, ratio));
 }
 
-function makeAudioBufferNative(channels, sr) {
-    const ctx = getCtx();
-    const upsampled = upsampleForPlayback(channels, sr);
-    const nativeSR = ctx.sampleRate;
-    const buf = ctx.createBuffer(upsampled.length, upsampled[0].length, nativeSR);
-    for (let c = 0; c < upsampled.length; c++)
-        buf.copyToChannel(upsampled[c], c);
-    return buf;
+function makeAudioBufferNative(channels, sr){
+  const ctx=getCtx();
+  const upsampled=upsampleForPlayback(channels, sr);
+  const nativeSR=ctx.sampleRate;
+  const buf=ctx.createBuffer(upsampled.length, upsampled[0].length, nativeSR);
+  for(let c=0;c<upsampled.length;c++) buf.copyToChannel(upsampled[c],c);
+  return buf;
 }
 
-// â”€â”€ Playback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Playback ───────────────────────────────────────────────────────────
 let playQueued = false; // true = advance to next file on end; false = stop after this file
 
-function playFile(idx) {
-    if (idx < 0 || idx >= files.length)
-        return;
-    const f = files[idx];
-    currentFileIdx = idx;
-    const btn = document.getElementById('previewBtn');
-    setPreviewBtn(btn, 'processing\u2026', false);
-    btn.disabled = true;
-    setTimeout(async () => {
-        try {
-            const ctx = getCtx();
-            if (ctx.state === 'suspended')
-                await ctx.resume();
-            const settings = getSettings();
-            const result = processBuffer(f.buffer, settings);
-            processedBuf = makeAudioBufferNative(result.channels, result.sr);
-            originalBuf = makeAudioBufferNative(getChannelsFrom(f.buffer), f.buffer.sampleRate);
-            processedSR = result.sr;
-            isPlaying = true;
-            setPreviewBtn(btn, 'stop', true);
-            btn.disabled = false;
-            setControlsDisabled(true);
-            document.getElementById('bypassBtn').disabled = false;
-            setRowPlaying(idx);
-            startSource(bypass ? originalBuf : processedBuf, 0, bypass ? null : processedSR);
-        } catch (e) {
-            setPreviewBtn(btn, 'preview', false);
-            btn.disabled = false;
-            document.getElementById('downloadBtn').disabled = false;
-            setControlsDisabled(false);
-            setStatus('error: ' + e.message);
-        }
-    }, 10);
+function playFile(idx){
+  if(idx<0||idx>=files.length)return;
+  const f=files[idx];
+  currentFileIdx=idx;
+  const btn=document.getElementById('previewBtn');
+  setPreviewBtn(btn,'processing\u2026',false);btn.disabled=true;
+  setTimeout(async()=>{
+    try{
+      const ctx=getCtx();
+      if(ctx.state==='suspended') await ctx.resume();
+      const settings=getSettings();
+      const result=processBuffer(f.buffer,settings);
+      processedBuf=makeAudioBufferNative(result.channels,result.sr);
+      originalBuf=makeAudioBufferNative(getChannelsFrom(f.buffer),f.buffer.sampleRate);
+      processedSR=result.sr;
+      isPlaying=true;
+      setPreviewBtn(btn,'stop',true);btn.disabled=false;
+      setControlsDisabled(true);
+      document.getElementById('bypassBtn').disabled=false;
+      setRowPlaying(idx);
+      startSource(bypass?originalBuf:processedBuf,0,bypass?null:processedSR);
+    }catch(e){
+      setPreviewBtn(btn,'preview',false);btn.disabled=false;
+      document.getElementById('downloadBtn').disabled=false;
+      setControlsDisabled(false);
+      setStatus('error: '+e.message);
+    }
+  },10);
 }
 
 // Updates preview button state without clobbering the SVG icon span
-function setPreviewBtn(btn, label, playing) {
-    btn.classList.toggle('playing', playing);
-    const lbl = btn.querySelector('.preview-label');
-    if (lbl)
-        lbl.textContent = label;
+function setPreviewBtn(btn, label, playing){
+  btn.classList.toggle('playing', playing);
+  const lbl=btn.querySelector('.preview-label');
+  if(lbl) lbl.textContent=label;
 }
 
-function startSource(buf, offset, targetSR) {
-    const ctx = getCtx();
-    const gen = ++playbackGeneration;
-    if (previewSource) {
-        try {
-            previewSource.stop();
-        } catch (e) {}
-        previewSource = null;
-    }
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
+function startSource(buf, offset, targetSR){
+  const ctx=getCtx();
+  const gen=++playbackGeneration;
+  if(previewSource){try{previewSource.stop();}catch(e){}previewSource=null;}
+  const src=ctx.createBufferSource();
+  src.buffer=buf;
 
-    if (targetSR && targetSR < ctx.sampleRate) {
-        const cutoff = targetSR / 2;
-        const f1 = ctx.createBiquadFilter(),
-            f2 = ctx.createBiquadFilter(),
-            f3 = ctx.createBiquadFilter();
-        [f1, f2, f3].forEach(f => {
-            f.type = 'lowpass';
-            f.frequency.value = cutoff;
-            f.Q.value = 0.707;
-        });
-        src.connect(f1);
-        f1.connect(f2);
-        f2.connect(f3);
-        f3.connect(ctx.destination);
-    } else {
-        src.connect(ctx.destination);
-    }
+  if(targetSR && targetSR < ctx.sampleRate){
+    const cutoff=targetSR/2;
+    const f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),f3=ctx.createBiquadFilter();
+    [f1,f2,f3].forEach(f=>{f.type='lowpass';f.frequency.value=cutoff;f.Q.value=0.707;});
+    src.connect(f1);f1.connect(f2);f2.connect(f3);f3.connect(ctx.destination);
+  } else {
+    src.connect(ctx.destination);
+  }
 
-    src.start(0, offset);
-    playbackStart = ctx.currentTime - offset;
-    previewSource = src;
-    src.onended = () => {
-        if (gen !== playbackGeneration)
-            return;
-        if (isPlaying) {
-            if (playQueued && currentFileIdx + 1 < files.length) {
-                playFile(currentFileIdx + 1);
-            } else {
-                isPlaying = false;
-                previewSource = null;
-                currentFileIdx = -1;
-                playQueued = false;
-                clearRowPlaying();
-                const b = document.getElementById('previewBtn');
-                setPreviewBtn(b, 'preview', false);
-                setControlsDisabled(false);
-                document.getElementById('downloadBtn').disabled = !files.length;
-            }
-        }
-    };
+  src.start(0, offset);
+  playbackStart=ctx.currentTime-offset;
+  previewSource=src;
+  src.onended=()=>{
+    if(gen!==playbackGeneration)return;
+    if(isPlaying){
+      if(playQueued && currentFileIdx+1<files.length){
+        playFile(currentFileIdx+1);
+      } else {
+        isPlaying=false;previewSource=null;currentFileIdx=-1;playQueued=false;
+        clearRowPlaying();
+        const b=document.getElementById('previewBtn');
+        setPreviewBtn(b,'preview',false);
+        setControlsDisabled(false);
+        document.getElementById('downloadBtn').disabled=!files.length;
+      }
+    }
+  };
 }
 
-function stopPlayback() {
-    playbackGeneration++;
-    if (previewSource) {
-        try {
-            previewSource.stop();
-        } catch (e) {}
-        previewSource = null;
-    }
-    isPlaying = false;
-    processedBuf = null;
-    originalBuf = null;
-    processedSR = null;
-    playQueued = false;
-    currentFileIdx = -1;
-    clearRowPlaying();
-    const btn = document.getElementById('previewBtn');
-    setPreviewBtn(btn, 'preview', false);
-    btn.disabled = !files.length;
-    setControlsDisabled(false);
-    document.getElementById('downloadBtn').disabled = !files.length;
+function stopPlayback(){
+  playbackGeneration++;
+  if(previewSource){try{previewSource.stop();}catch(e){}previewSource=null;}
+  isPlaying=false;processedBuf=null;originalBuf=null;processedSR=null;playQueued=false;
+  currentFileIdx=-1;
+  clearRowPlaying();
+  const btn=document.getElementById('previewBtn');
+  setPreviewBtn(btn,'preview',false);
+  btn.disabled=!files.length;
+  setControlsDisabled(false);
+  document.getElementById('downloadBtn').disabled=!files.length;
 }
 
-// Main preview button â€” plays full queue from start
-document.getElementById('previewBtn').addEventListener('click', () => {
-    if (isPlaying) {
-        stopPlayback();
-        return;
-    }
-    if (!files.length)
-        return;
-    playQueued = true;
-    playFile(0);
+// Main preview button — plays full queue from start
+document.getElementById('previewBtn').addEventListener('click',()=>{
+  if(isPlaying){stopPlayback();return;}
+  if(!files.length)return;
+  playQueued=true;
+  playFile(0);
 });
 
-document.getElementById('bypassBtn').addEventListener('click', () => {
-    bypass = !bypass;
-    setSvgToggle(document.getElementById('bypassBtn'), bypass);
-    if (isPlaying && processedBuf && originalBuf) {
-        const ctx = getCtx();
-        const elapsed = ctx.currentTime - playbackStart;
-        const targetBuf = bypass ? originalBuf : processedBuf;
-        startSource(targetBuf, Math.min(Math.max(0, elapsed), targetBuf.duration - 0.01), bypass ? null : processedSR);
-    }
+document.getElementById('bypassBtn').addEventListener('click',()=>{
+  bypass=!bypass;
+  setSvgToggle(document.getElementById('bypassBtn'),bypass);
+  if(isPlaying&&processedBuf&&originalBuf){
+    const ctx=getCtx();
+    const elapsed=ctx.currentTime-playbackStart;
+    const targetBuf=bypass?originalBuf:processedBuf;
+    startSource(targetBuf,Math.min(Math.max(0,elapsed),targetBuf.duration-0.01),bypass?null:processedSR);
+  }
 });
 
-// â”€â”€ Download â€” zip all files â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function encodeWav(channels, sr, bits) {
-    const numCh = channels.length,
-        numFrames = channels[0].length,
-        bps = bits / 8;
-    const dataSize = numFrames * numCh * bps,
-        ab = new ArrayBuffer(44 + dataSize),
-        v = new DataView(ab);
-    const ws = (o, s) => {
-        for (let i = 0; i < s.length; i++)
-            v.setUint8(o + i, s.charCodeAt(i));
-    };
-    ws(0, 'RIFF');
-    v.setUint32(4, 36 + dataSize, true);
-    ws(8, 'WAVE');
-    ws(12, 'fmt ');
-    v.setUint32(16, 16, true);
-    v.setUint16(20, 1, true);
-    v.setUint16(22, numCh, true);
-    v.setUint32(24, sr, true);
-    v.setUint32(28, sr * numCh * bps, true);
-    v.setUint16(32, numCh * bps, true);
-    v.setUint16(34, bits, true);
-    ws(36, 'data');
-    v.setUint32(40, dataSize, true);
-    let offset = 44;
-    for (let i = 0; i < numFrames; i++) {
-        for (let c = 0; c < numCh; c++) {
-            const s = Math.max(-1, Math.min(1, channels[c][i]));
-            if (bits === 32) {
-                v.setInt32(offset, Math.round(s * 2147483647), true);
-                offset += 4;
-            }
-            else if (bits === 24) {
-                const val = Math.round(s * 8388607);
-                v.setUint8(offset, val & 0xff);
-                v.setUint8(offset + 1, (val >> 8) & 0xff);
-                v.setUint8(offset + 2, (val >> 16) & 0xff);
-                offset += 3;
-            }
-            else if (bits === 8) {
-                v.setUint8(offset, Math.round((s + 1) * 127.5));
-                offset += 1;
-            }
-            else {
-                v.setInt16(offset, Math.round(s * 32767), true);
-                offset += 2;
-            }
-        }
+// ── Download — zip all files ────────────────────────────────────────────
+function encodeWav(channels,sr,bits){
+  const numCh=channels.length,numFrames=channels[0].length,bps=bits/8;
+  const dataSize=numFrames*numCh*bps,ab=new ArrayBuffer(44+dataSize),v=new DataView(ab);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+dataSize,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,numCh,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*numCh*bps,true);
+  v.setUint16(32,numCh*bps,true);v.setUint16(34,bits,true);
+  ws(36,'data');v.setUint32(40,dataSize,true);
+  let offset=44;
+  for(let i=0;i<numFrames;i++){
+    for(let c=0;c<numCh;c++){
+      const s=Math.max(-1,Math.min(1,channels[c][i]));
+      if(bits===32){v.setInt32(offset,Math.round(s*2147483647),true);offset+=4;}
+      else if(bits===24){const val=Math.round(s*8388607);v.setUint8(offset,val&0xff);v.setUint8(offset+1,(val>>8)&0xff);v.setUint8(offset+2,(val>>16)&0xff);offset+=3;}
+      else if(bits===8){v.setUint8(offset,Math.round((s+1)*127.5));offset+=1;}
+      else{v.setInt16(offset,Math.round(s*32767),true);offset+=2;}
     }
-    return new Blob([ab], {
-        type: 'audio/wav'
-    });
+  }
+  return new Blob([ab],{type:'audio/wav'});
 }
 
-// â”€â”€ Minimal ZIP encoder (STORED, no compression) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function buildZip(entries) {
-    const enc = new TextEncoder();
-    const parts = [],
-        centralDir = [];
-    let offset = 0;
-    function crc32(data) {
-        let c = 0xFFFFFFFF;
-        for (let i = 0; i < data.length; i++) {
-            c ^= data[i];
-            for (let j = 0; j < 8; j++)
-                c = c & 1 ? (c >>> 1) ^ 0xEDB88320 : (c >>> 1);
-        }
-        return (c ^ 0xFFFFFFFF) >>> 0;
+// ── Minimal ZIP encoder (STORED, no compression) ──────────────────────────────
+function buildZip(entries){
+  const enc=new TextEncoder();
+  const parts=[],centralDir=[];
+  let offset=0;
+  function crc32(data){
+    let c=0xFFFFFFFF;
+    for(let i=0;i<data.length;i++){
+      c^=data[i];
+      for(let j=0;j<8;j++)c=c&1?(c>>>1)^0xEDB88320:(c>>>1);
     }
-    for (const {name, data} of entries) {
-        const nb = enc.encode(name),
-            crc = crc32(data),
-            sz = data.length;
-        const lf = new Uint8Array(30 + nb.length),
-            ld = new DataView(lf.buffer);
-        ld.setUint32(0, 0x04034b50, true);
-        ld.setUint16(4, 20, true);
-        ld.setUint16(6, 0, true);
-        ld.setUint16(8, 0, true);
-        ld.setUint16(10, 0, true);
-        ld.setUint16(12, 0, true);
-        ld.setUint32(14, crc, true);
-        ld.setUint32(18, sz, true);
-        ld.setUint32(22, sz, true);
-        ld.setUint16(26, nb.length, true);
-        ld.setUint16(28, 0, true);
-        lf.set(nb, 30);
-        const cd = new Uint8Array(46 + nb.length),
-            dd = new DataView(cd.buffer);
-        dd.setUint32(0, 0x02014b50, true);
-        dd.setUint16(4, 20, true);
-        dd.setUint16(6, 20, true);
-        dd.setUint16(8, 0, true);
-        dd.setUint16(10, 0, true);
-        dd.setUint16(12, 0, true);
-        dd.setUint16(14, 0, true);
-        dd.setUint32(16, crc, true);
-        dd.setUint32(20, sz, true);
-        dd.setUint32(24, sz, true);
-        dd.setUint16(28, nb.length, true);
-        dd.setUint16(30, 0, true);
-        dd.setUint16(32, 0, true);
-        dd.setUint16(34, 0, true);
-        dd.setUint16(36, 0, true);
-        dd.setUint32(38, 0, true);
-        dd.setUint32(42, offset, true);
-        cd.set(nb, 46);
-        parts.push(lf, data);
-        centralDir.push(cd);
-        offset += lf.length + data.length;
-    }
-    const cdsz = centralDir.reduce((a, b) => a + b.length, 0);
-    const eocd = new Uint8Array(22),
-        ev = new DataView(eocd.buffer);
-    ev.setUint32(0, 0x06054b50, true);
-    ev.setUint16(4, 0, true);
-    ev.setUint16(6, 0, true);
-    ev.setUint16(8, entries.length, true);
-    ev.setUint16(10, entries.length, true);
-    ev.setUint32(12, cdsz, true);
-    ev.setUint32(16, offset, true);
-    ev.setUint16(20, 0, true);
-    const all = [...parts, ...centralDir, eocd];
-    const total = all.reduce((a, b) => a + b.length, 0);
-    const out = new Uint8Array(total);
-    let pos = 0;
-    for (const p of all) {
-        out.set(p, pos);
-        pos += p.length;
-    }
-    return new Blob([out], {
-        type: 'application/zip'
-    });
+    return(c^0xFFFFFFFF)>>>0;
+  }
+  for(const{name,data}of entries){
+    const nb=enc.encode(name),crc=crc32(data),sz=data.length;
+    const lf=new Uint8Array(30+nb.length),ld=new DataView(lf.buffer);
+    ld.setUint32(0,0x04034b50,true);ld.setUint16(4,20,true);ld.setUint16(6,0,true);
+    ld.setUint16(8,0,true);ld.setUint16(10,0,true);ld.setUint16(12,0,true);
+    ld.setUint32(14,crc,true);ld.setUint32(18,sz,true);ld.setUint32(22,sz,true);
+    ld.setUint16(26,nb.length,true);ld.setUint16(28,0,true);lf.set(nb,30);
+    const cd=new Uint8Array(46+nb.length),dd=new DataView(cd.buffer);
+    dd.setUint32(0,0x02014b50,true);dd.setUint16(4,20,true);dd.setUint16(6,20,true);
+    dd.setUint16(8,0,true);dd.setUint16(10,0,true);dd.setUint16(12,0,true);dd.setUint16(14,0,true);
+    dd.setUint32(16,crc,true);dd.setUint32(20,sz,true);dd.setUint32(24,sz,true);
+    dd.setUint16(28,nb.length,true);dd.setUint16(30,0,true);dd.setUint16(32,0,true);
+    dd.setUint16(34,0,true);dd.setUint16(36,0,true);dd.setUint32(38,0,true);
+    dd.setUint32(42,offset,true);cd.set(nb,46);
+    parts.push(lf,data);centralDir.push(cd);offset+=lf.length+data.length;
+  }
+  const cdsz=centralDir.reduce((a,b)=>a+b.length,0);
+  const eocd=new Uint8Array(22),ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true);ev.setUint16(4,0,true);ev.setUint16(6,0,true);
+  ev.setUint16(8,entries.length,true);ev.setUint16(10,entries.length,true);
+  ev.setUint32(12,cdsz,true);ev.setUint32(16,offset,true);ev.setUint16(20,0,true);
+  const all=[...parts,...centralDir,eocd];
+  const total=all.reduce((a,b)=>a+b.length,0);
+  const out=new Uint8Array(total);let pos=0;
+  for(const p of all){out.set(p,pos);pos+=p.length;}
+  return new Blob([out],{type:'application/zip'});
 }
 
-document.getElementById('downloadBtn').addEventListener('click', async () => {
-    if (!files.length)
-        return;
-    stopPlayback();
-    document.getElementById('downloadBtn').disabled = true;
-    document.getElementById('previewBtn').disabled = true;
-    setStatus('processingâ€¦');
-    try {
-        const settings = getSettings();
-        const entries = [];
-        for (const f of files) {
-            const result = processBuffer(f.buffer, settings);
-            const outBits = CODEC_HIDE_BD.includes(settings.codec) ? 16 : settings.bits;
-            const blob = encodeWav(result.channels, result.sr, outBits);
-            const ab = await blob.arrayBuffer();
-            const srL = (result.sr / 1000).toFixed(1);
-            const monoL = result.channels.length === 1 ? '_mono' : '';
-            entries.push({
-                name: `${f.baseName}_${srL}k_${settings.codec}${monoL}.wav`,
-                data: new Uint8Array(ab)
-            });
-        }
-        const zipBlob = buildZip(entries);
-        const url = URL.createObjectURL(zipBlob);
-        const a = document.createElement('a');
-        a.download = `reduced_${files.length}file${files.length === 1 ? '' : 's'}.zip`;
-        a.href = url;
-        a.click();
-        URL.revokeObjectURL(url);
-        setStatus('');
-    } catch (e) {
-        setStatus('export error: ' + e.message);
+document.getElementById('downloadBtn').addEventListener('click',async()=>{
+  if(!files.length)return;
+  stopPlayback();
+  document.getElementById('downloadBtn').disabled=true;
+  document.getElementById('previewBtn').disabled=true;
+  setStatus('processing…');
+  try{
+    const settings=getSettings();
+    const entries=[];
+    for(const f of files){
+      const result=processBuffer(f.buffer,settings);
+      const outBits=CODEC_HIDE_BD.includes(settings.codec)?16:settings.bits;
+      const blob=encodeWav(result.channels,result.sr,outBits);
+      const ab=await blob.arrayBuffer();
+      const srL=(result.sr/1000).toFixed(1);
+      const monoL=result.channels.length===1?'_mono':'';
+      entries.push({name:`${f.baseName}_${srL}k_${settings.codec}${monoL}.wav`,data:new Uint8Array(ab)});
     }
-    document.getElementById('downloadBtn').disabled = false;
-    document.getElementById('previewBtn').disabled = false;
+    const zipBlob=buildZip(entries);
+    const url=URL.createObjectURL(zipBlob);
+    const a=document.createElement('a');
+    a.download=`reduced_${files.length}file${files.length===1?'':'s'}.zip`;
+    a.href=url;a.click();URL.revokeObjectURL(url);
+    setStatus('');
+  }catch(e){
+    setStatus('export error: '+e.message);
+  }
+  document.getElementById('downloadBtn').disabled=false;
+  document.getElementById('previewBtn').disabled=false;
 });
 
-function setStatus(msg) {
-    const el = document.getElementById('status');
-    el.innerHTML = msg ? `<h3>${msg}</h3>` : '';
+function setStatus(msg){
+  const el=document.getElementById('status');
+  el.innerHTML=msg?`<h3>${msg}</h3>`:'';
 }
 
-function updateTotalReduction() {
-    const el = document.getElementById('totalReduction');
-    if (!files.length) {
-        el.style.display = 'none';
-        return;
-    }
-    const s = getSettings();
-    const outBits = CODEC_HIDE_BD.includes(s.codec) ? 16 : s.bits;
-    const outCh = monoOutput ? 1 : null; // null means per-file channel count
-    let origTotal = 0,
-        outTotal = 0;
-    for (const f of files) {
-        origTotal += f.fileSize;
-        const fCh = outCh !== null ? outCh : f.buffer.numberOfChannels;
-        const ratio = f.buffer.sampleRate / s.targetSR;
-        const outFrames = Math.floor(f.buffer.length / ratio);
-        outTotal += 44 + outFrames * fCh * (outBits / 8);
-    }
-    const rawPct = 100 - (outTotal / origTotal * 100);
-    const pctStr = rawPct > 0.5 ? `\u2212${rawPct.toFixed(0)}%` : rawPct < -0.5 ? `+${Math.abs(rawPct).toFixed(0)}%` : '\u22480%';
-    el.textContent = pctStr;
-    el.style.display = 'block';
+function updateTotalReduction(){
+  const el=document.getElementById('totalReduction');
+  if(!files.length){el.style.display='none';return;}
+  const s=getSettings();
+  const outBits=CODEC_HIDE_BD.includes(s.codec)?16:s.bits;
+  const outCh=monoOutput?1:null; // null means per-file channel count
+  let origTotal=0,outTotal=0;
+  for(const f of files){
+    origTotal+=f.fileSize;
+    const fCh=outCh!==null?outCh:f.buffer.numberOfChannels;
+    const ratio=f.buffer.sampleRate/s.targetSR;
+    const outFrames=Math.floor(f.buffer.length/ratio);
+    outTotal+=44+outFrames*fCh*(outBits/8);
+  }
+  const rawPct=100-(outTotal/origTotal*100);
+  const pctStr=rawPct>0.5?`\u2212${rawPct.toFixed(0)}%`:rawPct<-0.5?`+${Math.abs(rawPct).toFixed(0)}%`:'\u22480%';
+  el.textContent=pctStr;
+  el.style.display='block';
 }
 
-// â”€â”€ Presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const PRESETS = {
-    telephone: {
-        sr: 8000,
-        bits: 16,
-        lp: 3400,
-        hp: 300,
-        res: 20,
-        filterModel: 'chebyshev',
-        codec: 'mulaw',
-        mono: true
-    },
-    gameboy: {
-        sr: 11025,
-        bits: 16,
-        lp: 20001,
-        hp: 0,
-        res: 0,
-        filterModel: 'butterworth',
-        codec: 'nearest',
-        mono: true
-    },
-    soviet: {
-        sr: 11025,
-        bits: 16,
-        lp: 8000,
-        hp: 80,
-        res: 40,
-        filterModel: 'moog',
-        codec: 'adpcm',
-        mono: true
-    },
-    cassette: {
-        sr: 22050,
-        bits: 16,
-        lp: 14000,
-        hp: 60,
-        res: 10,
-        filterModel: 'butterworth',
-        codec: 'linear',
-        mono: false
-    },
-    transistor: {
-        sr: 11025,
-        bits: 16,
-        lp: 6000,
-        hp: 500,
-        res: 30,
-        filterModel: 'chebyshev',
-        codec: 'mulaw',
-        mono: true
-    },
-    fieldrecorder: {
-        sr: 22050,
-        bits: 16,
-        lp: 20001,
-        hp: 40,
-        res: 0,
-        filterModel: 'butterworth',
-        codec: 'polyphase',
-        mono: true
-    },
-    destroyed: {
-        sr: 4000,
-        bits: 16,
-        lp: 20001,
-        hp: 0,
-        res: 0,
-        filterModel: 'butterworth',
-        codec: 'deltasigma',
-        mono: true
-    },
+// ── Presets ────────────────────────────────────────────────────────────
+const PRESETS={
+  telephone: {sr:8000, bits:16,lp:3400, hp:300,res:20,filterModel:'chebyshev',codec:'mulaw',     mono:true},
+  gameboy:   {sr:11025,bits:16,lp:20001,hp:0,  res:0, filterModel:'butterworth',codec:'nearest',  mono:true},
+  soviet:    {sr:11025,bits:16,lp:8000, hp:80, res:40,filterModel:'moog',       codec:'adpcm',    mono:true},
+  cassette:  {sr:22050,bits:16,lp:14000,hp:60, res:10,filterModel:'butterworth',codec:'linear',   mono:false},
+  transistor:{sr:11025,bits:16,lp:6000, hp:500,res:30,filterModel:'chebyshev',  codec:'mulaw',    mono:true},
+  fieldrecorder:{sr:22050,bits:16,lp:20001,hp:40,res:0,filterModel:'butterworth',codec:'polyphase',mono:true},
+  destroyed: {sr:4000, bits:16,lp:20001,hp:0,  res:0, filterModel:'butterworth',codec:'deltasigma',mono:true},
 };
 
-function applyPreset(name) {
-    const p = PRESETS[name];
-    if (!p)
-        return;
-    activePreset = name;
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
-    document.getElementById('sampleRate').value = srToSlider(p.sr);
-    document.getElementById('sampleRateVal').textContent = srLabel(p.sr);
-    document.getElementById('bitDepth').value = p.bits;
-    document.getElementById('bitDepthVal').textContent = p.bits + '-bit';
-    document.getElementById('filterLP').value = p.lp > 20000 ? 1000 : lpToSlider(p.lp);
-    document.getElementById('filterLPVal').textContent = fcLabel(p.lp, false);
-    document.getElementById('filterHP').value = p.hp <= 0 ? 0 : hpToSlider(p.hp);
-    document.getElementById('filterHPVal').textContent = fcLabel(p.hp, true);
-    document.getElementById('filterRes').value = p.res;
-    document.getElementById('filterResVal').textContent = p.res;
-    filterModel = p.filterModel;
-    document.querySelectorAll('#filterModelSeg .btn').forEach(b => b.classList.toggle('active', b.dataset.val === p.filterModel));
-    codec = p.codec;
-    document.querySelectorAll('#codecSeg .btn').forEach(b => b.classList.toggle('active', b.dataset.val === p.codec));
-    applyCodecUI();
-    monoOutput = p.mono;
-    document.getElementById('btnMono').classList.toggle('active', p.mono);
-    document.getElementById('btnStereo').classList.toggle('active', !p.mono);
-    filterActive = (p.lp < 20001 || p.hp > 0);
-    setSvgToggle(document.getElementById('filterToggleBtn'), filterActive);
-    document.getElementById('filterControls').classList.toggle('hidden', !filterActive);
-    ditherActive = true;
-    setSvgToggle(document.getElementById('ditherBtn'), true);
-    updateTotalReduction();
+function applyPreset(name){
+  const p=PRESETS[name];if(!p)return;
+  activePreset=name;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));
+  document.getElementById('sampleRate').value=srToSlider(p.sr);
+  document.getElementById('sampleRateVal').textContent=srLabel(p.sr);
+  document.getElementById('bitDepth').value=p.bits;
+  document.getElementById('bitDepthVal').textContent=p.bits+'-bit';
+  document.getElementById('filterLP').value=p.lp>20000?1000:lpToSlider(p.lp);
+  document.getElementById('filterLPVal').textContent=fcLabel(p.lp,false);
+  document.getElementById('filterHP').value=p.hp<=0?0:hpToSlider(p.hp);
+  document.getElementById('filterHPVal').textContent=fcLabel(p.hp,true);
+  document.getElementById('filterRes').value=p.res;
+  document.getElementById('filterResVal').textContent=p.res;
+  filterModel=p.filterModel;
+  document.querySelectorAll('#filterModelSeg .btn').forEach(b=>b.classList.toggle('active',b.dataset.val===p.filterModel));
+  codec=p.codec;
+  document.querySelectorAll('#codecSeg .btn').forEach(b=>b.classList.toggle('active',b.dataset.val===p.codec));
+  applyCodecUI();
+  monoOutput=p.mono;
+  document.getElementById('btnMono').classList.toggle('active',p.mono);
+  document.getElementById('btnStereo').classList.toggle('active',!p.mono);
+  filterActive=(p.lp<20001||p.hp>0);
+  setSvgToggle(document.getElementById('filterToggleBtn'),filterActive);
+  document.getElementById('filterControls').classList.toggle('hidden',!filterActive);
+  ditherActive=true;
+  setSvgToggle(document.getElementById('ditherBtn'),true);
+  updateTotalReduction();
 }
 
-document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+document.querySelectorAll('.preset-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>applyPreset(btn.dataset.preset));
 });
 
 applyCodecUI();
