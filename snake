@@ -1,7 +1,26 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  .snake { background: transparent; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
-  .snake canvas { display: block; background: transparent; image-rendering: pixelated; } 
+
+  body {
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  canvas {
+    display: block;
+    background: transparent;
+    image-rendering: pixelated;
+  }
+
   #score {
     position: absolute;
     top: 50%;
@@ -20,7 +39,11 @@
     user-select: none;
   }
 </style>
-<canvas class="snake" id="c"></canvas>
+
+<div class="canvas-wrap">
+  <canvas id="c"></canvas>
+  <h2 id="score">0</h2>
+</div>
 
 <script>
 // ============================================================
@@ -38,18 +61,18 @@ const GRID_Y_MOBILE     = 5;         // rows    — mobile  (≤ 320px)
 const BLOCK_COLOR       = '#FC6F2F'; // hex colour for snake & food
 const SPEED             = 0.5;       // game speed multiplier (0.5 = slower, 2 = faster)
 // ============================================================
- 
+
 const TICK_MS   = 110 / SPEED;
 const COLOR_DEFAULT = 'rgba(252, 111, 47, 1)';
 const COLOR_UNDER   = '#FFEBD2';
- 
+
 const canvas    = document.getElementById('c');
 const ctx       = canvas.getContext('2d');
 const scoreEl   = document.getElementById('score');
- 
+
 // ---- responsive grid ----
 let GX, GY, BS;
- 
+
 function applyGrid() {
   const w = window.innerWidth;
   if (w <= 320)      { GX = GRID_X_MOBILE;  GY = GRID_Y_MOBILE;  BS = BLOCK_SIZE_MOBILE;  }
@@ -58,7 +81,7 @@ function applyGrid() {
   canvas.width  = BS * GX;
   canvas.height = BS * GY;
 }
- 
+
 // Restart on resize only if the breakpoint bucket changes
 let lastBucket = null;
 window.addEventListener('resize', () => {
@@ -69,10 +92,10 @@ window.addEventListener('resize', () => {
     startGame();
   }
 });
- 
+
 // ---- state ----
 let snake, dir, nextDir, food, loop, autoplay, playerHasInteracted, score;
- 
+
 function startGame() {
   applyGrid();
   const cx = Math.floor(GX / 2);
@@ -87,7 +110,7 @@ function startGame() {
   clearInterval(loop);
   loop = setInterval(tick, TICK_MS);
 }
- 
+
 function placeFood() {
   const occupied = new Set(snake.map(s => `${s.x},${s.y}`));
   let f;
@@ -95,33 +118,33 @@ function placeFood() {
   while (occupied.has(`${f.x},${f.y}`));
   food = f;
 }
- 
+
 function rnd(n) { return Math.floor(Math.random() * n); }
- 
+
 // ---- autoplay AI ----
 function autoMove() {
   const head = snake[0];
   const occupied = new Set(snake.map(s => `${s.x},${s.y}`));
- 
+
   const alignedH = head.y === food.y;
   const alignedV = head.x === food.x;
- 
+
   const straightNx = (head.x + nextDir.x + GX) % GX;
   const straightNy = (head.y + nextDir.y + GY) % GY;
   const straightSafe = !occupied.has(`${straightNx},${straightNy}`);
- 
+
   const shouldTurn = (alignedH && nextDir.y !== 0) || (alignedV && nextDir.x !== 0) || !straightSafe;
   if (!shouldTurn) return;
- 
+
   const dx = ((food.x - head.x + GX) % GX <= GX / 2) ? 1 : -1;
   const dy = ((food.y - head.y + GY) % GY <= GY / 2) ? 1 : -1;
- 
+
   const candidates = alignedH
     ? [{ x: dx, y: 0 }, { x: 0, y: dy }, { x: 0, y: -dy }, { x: -dx, y: 0 }]
     : alignedV
     ? [{ x: 0, y: dy }, { x: dx, y: 0 }, { x: -dx, y: 0 }, { x: 0, y: -dy }]
     : [{ x: dx, y: 0 }, { x: 0, y: dy }, { x: -dx, y: 0 }, { x: 0, y: -dy }];
- 
+
   for (const d of candidates) {
     if (d.x === -dir.x && d.y === -dir.y) continue;
     const nx = (head.x + d.x + GX) % GX;
@@ -132,23 +155,23 @@ function autoMove() {
     }
   }
 }
- 
+
 function tick() {
   if (autoplay) autoMove();
   dir = { ...nextDir };
- 
+
   const head = {
     x: (snake[0].x + dir.x + GX) % GX,
     y: (snake[0].y + dir.y + GY) % GY,
   };
- 
+
   if (snake.some(s => s.x === head.x && s.y === head.y)) {
     startGame();
     return;
   }
- 
+
   snake.unshift(head);
- 
+
   if (head.x === food.x && head.y === food.y) {
     score++;
     scoreEl.textContent = score;
@@ -156,49 +179,49 @@ function tick() {
   } else {
     snake.pop();
   }
- 
+
   draw();
 }
- 
+
 // ---- score colour: flip when snake overlaps the score element ----
 function updateScoreColor() {
   // Get the score element's bounding box relative to the canvas
   const canvasRect = canvas.getBoundingClientRect();
   const scoreRect  = scoreEl.getBoundingClientRect();
- 
+
   // Convert to canvas pixel space (accounting for any CSS scaling)
   const scaleX = canvas.width  / canvasRect.width;
   const scaleY = canvas.height / canvasRect.height;
- 
+
   const left   = (scoreRect.left   - canvasRect.left)  * scaleX;
   const top    = (scoreRect.top    - canvasRect.top)    * scaleY;
   const right  = (scoreRect.right  - canvasRect.left)   * scaleX;
   const bottom = (scoreRect.bottom - canvasRect.top)    * scaleY;
- 
+
   // Check if any snake segment's block overlaps the score bounding box
   const overlaps = snake.some(seg => {
     const sx = seg.x * BS;
     const sy = seg.y * BS;
     return sx < right && sx + BS > left && sy < bottom && sy + BS > top;
   });
- 
+
   scoreEl.style.color = overlaps ? COLOR_UNDER : COLOR_DEFAULT;
 }
- 
+
 // ---- draw ----
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
- 
+
   ctx.fillStyle = BLOCK_COLOR;
   ctx.fillRect(food.x * BS, food.y * BS, BS, BS);
- 
+
   snake.forEach(seg => {
     ctx.fillRect(seg.x * BS, seg.y * BS, BS, BS);
   });
- 
+
   updateScoreColor();
 }
- 
+
 // ---- hand off to player on first input ----
 function takeOver(d) {
   if (d && !(d.x === -dir.x && d.y === -dir.y)) {
@@ -207,7 +230,7 @@ function takeOver(d) {
     nextDir = d;
   }
 }
- 
+
 // ---- input: keyboard ----
 const DIRS = {
   ArrowUp:    { x: 0, y: -1 }, W: { x: 0, y: -1 }, w: { x: 0, y: -1 },
@@ -215,12 +238,12 @@ const DIRS = {
   ArrowLeft:  { x: -1, y: 0 }, A: { x: -1, y: 0 }, a: { x: -1, y: 0 },
   ArrowRight: { x:  1, y: 0 }, D: { x:  1, y: 0 }, d: { x:  1, y: 0 },
 };
- 
+
 document.addEventListener('keydown', e => {
   const d = DIRS[e.key];
   if (d) { takeOver(d); e.preventDefault(); }
 });
- 
+
 // ---- input: swipe ----
 let tx = 0, ty = 0;
 canvas.addEventListener('touchstart', e => {
@@ -228,7 +251,7 @@ canvas.addEventListener('touchstart', e => {
   ty = e.touches[0].clientY;
   e.preventDefault();
 }, { passive: false });
- 
+
 canvas.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - tx;
   const dy = e.changedTouches[0].clientY - ty;
@@ -239,7 +262,7 @@ canvas.addEventListener('touchend', e => {
   takeOver(d);
   e.preventDefault();
 }, { passive: false });
- 
+
 // ---- go ----
 playerHasInteracted = false;
 lastBucket = window.innerWidth <= 320 ? 'mobile' : window.innerWidth <= 768 ? 'tablet' : 'desktop';
