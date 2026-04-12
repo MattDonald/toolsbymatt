@@ -9,27 +9,27 @@
 // ============================================================
 //  EASY-ACCESS VARIABLES — edit these
 // ============================================================
-const BLOCK_SIZE        = 94;        // px — desktop
-const BLOCK_SIZE_TABLET = 32;        // px — tablet  (≤ 768px)
-const BLOCK_SIZE_MOBILE = 24;        // px — mobile  (≤ 320px)
-const GRID_X            = 11;        // columns — desktop
-const GRID_Y            = 4;        // rows    — desktop
+const BLOCK_SIZE        = 128;       // px — desktop
+const BLOCK_SIZE_TABLET = 96;        // px — tablet  (≤ 768px)
+const BLOCK_SIZE_MOBILE = 64;        // px — mobile  (≤ 320px)
+const GRID_X            = 8;         // columns — desktop
+const GRID_Y            = 3;         // rows    — desktop
 const GRID_X_TABLET     = 8;         // columns — tablet  (≤ 768px)
-const GRID_Y_TABLET     = 8;         // rows    — tablet  (≤ 768px)
-const GRID_X_MOBILE     = 6;         // columns — mobile  (≤ 320px)
-const GRID_Y_MOBILE     = 6;         // rows    — mobile  (≤ 320px)
-const BLOCK_COLOR       = '#fc6f2f'; // hex colour for snake & food
-const SPEED             = 1;         // game speed multiplier (0.5 = slower, 2 = faster)
+const GRID_Y_TABLET     = 4;         // rows    — tablet  (≤ 768px)
+const GRID_X_MOBILE     = 5;         // columns — mobile  (≤ 320px)
+const GRID_Y_MOBILE     = 5;         // rows    — mobile  (≤ 320px)
+const BLOCK_COLOR       = '#FC6F2F'; // hex colour for snake & food
+const SPEED             = 0.5;       // game speed multiplier (0.5 = slower, 2 = faster)
 // ============================================================
-
+ 
 const TICK_MS = 110 / SPEED;
-
+ 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-
+ 
 // ---- responsive grid ----
 let GX, GY, BS;
-
+ 
 function applyGrid() {
   const w = window.innerWidth;
   if (w <= 320) { GX = GRID_X_MOBILE; GY = GRID_Y_MOBILE; BS = BLOCK_SIZE_MOBILE; }
@@ -38,7 +38,7 @@ function applyGrid() {
   canvas.width  = BS * GX;
   canvas.height = BS * GY;
 }
-
+ 
 // Restart on resize only if the breakpoint bucket changes
 let lastBucket = null;
 window.addEventListener('resize', () => {
@@ -49,10 +49,10 @@ window.addEventListener('resize', () => {
     startGame();
   }
 });
-
+ 
 // ---- state ----
-let snake, dir, nextDir, food, loop, autoplay;
-
+let snake, dir, nextDir, food, loop, autoplay, playerHasInteracted;
+ 
 function startGame() {
   applyGrid();
   const cx = Math.floor(GX / 2);
@@ -60,12 +60,12 @@ function startGame() {
   snake   = [{ x: cx, y: cy }, { x: cx - 1, y: cy }];
   dir     = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
-  autoplay = true;
+  autoplay = !playerHasInteracted;
   placeFood();
   clearInterval(loop);
   loop = setInterval(tick, TICK_MS);
 }
-
+ 
 function placeFood() {
   const occupied = new Set(snake.map(s => `${s.x},${s.y}`));
   let f;
@@ -73,33 +73,33 @@ function placeFood() {
   while (occupied.has(`${f.x},${f.y}`));
   food = f;
 }
-
+ 
 function rnd(n) { return Math.floor(Math.random() * n); }
-
+ 
 // ---- autoplay AI ----
 function autoMove() {
   const head = snake[0];
   const occupied = new Set(snake.map(s => `${s.x},${s.y}`));
-
+ 
   const alignedH = head.y === food.y;
   const alignedV = head.x === food.x;
-
+ 
   const straightNx = (head.x + nextDir.x + GX) % GX;
   const straightNy = (head.y + nextDir.y + GY) % GY;
   const straightSafe = !occupied.has(`${straightNx},${straightNy}`);
-
+ 
   const shouldTurn = (alignedH && nextDir.y !== 0) || (alignedV && nextDir.x !== 0) || !straightSafe;
   if (!shouldTurn) return;
-
+ 
   const dx = ((food.x - head.x + GX) % GX <= GX / 2) ? 1 : -1;
   const dy = ((food.y - head.y + GY) % GY <= GY / 2) ? 1 : -1;
-
+ 
   const candidates = alignedH
     ? [{ x: dx, y: 0 }, { x: 0, y: dy }, { x: 0, y: -dy }, { x: -dx, y: 0 }]
     : alignedV
     ? [{ x: 0, y: dy }, { x: dx, y: 0 }, { x: -dx, y: 0 }, { x: 0, y: -dy }]
     : [{ x: dx, y: 0 }, { x: 0, y: dy }, { x: -dx, y: 0 }, { x: 0, y: -dy }];
-
+ 
   for (const d of candidates) {
     if (d.x === -dir.x && d.y === -dir.y) continue;
     const nx = (head.x + d.x + GX) % GX;
@@ -110,54 +110,55 @@ function autoMove() {
     }
   }
 }
-
+ 
 function tick() {
   if (autoplay) autoMove();
   dir = { ...nextDir };
-
+ 
   const head = {
     x: (snake[0].x + dir.x + GX) % GX,
     y: (snake[0].y + dir.y + GY) % GY,
   };
-
+ 
   if (snake.some(s => s.x === head.x && s.y === head.y)) {
     startGame();
     return;
   }
-
+ 
   snake.unshift(head);
-
+ 
   if (head.x === food.x && head.y === food.y) {
     placeFood();
   } else {
     snake.pop();
   }
-
+ 
   draw();
 }
-
+ 
 // ---- draw ----
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-
+ 
   ctx.fillStyle = BLOCK_COLOR;
-
+ 
   ctx.fillRect(food.x * BS, food.y * BS, BS, BS);
-
+ 
   snake.forEach(seg => {
     ctx.fillRect(seg.x * BS, seg.y * BS, BS, BS);
   });
 }
-
+ 
 // ---- hand off to player on first input ----
 function takeOver(d) {
   if (d && !(d.x === -dir.x && d.y === -dir.y)) {
     autoplay = false;
+    playerHasInteracted = true;
     nextDir = d;
   }
 }
-
+ 
 // ---- input: keyboard ----
 const DIRS = {
   ArrowUp:    { x: 0, y: -1 }, W: { x: 0, y: -1 }, w: { x: 0, y: -1 },
@@ -165,12 +166,12 @@ const DIRS = {
   ArrowLeft:  { x: -1, y: 0 }, A: { x: -1, y: 0 }, a: { x: -1, y: 0 },
   ArrowRight: { x:  1, y: 0 }, D: { x:  1, y: 0 }, d: { x:  1, y: 0 },
 };
-
+ 
 document.addEventListener('keydown', e => {
   const d = DIRS[e.key];
   if (d) { takeOver(d); e.preventDefault(); }
 });
-
+ 
 // ---- input: swipe ----
 let tx = 0, ty = 0;
 canvas.addEventListener('touchstart', e => {
@@ -178,7 +179,7 @@ canvas.addEventListener('touchstart', e => {
   ty = e.touches[0].clientY;
   e.preventDefault();
 }, { passive: false });
-
+ 
 canvas.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - tx;
   const dy = e.changedTouches[0].clientY - ty;
@@ -189,8 +190,9 @@ canvas.addEventListener('touchend', e => {
   takeOver(d);
   e.preventDefault();
 }, { passive: false });
-
+ 
 // ---- go ----
+playerHasInteracted = false;
 lastBucket = window.innerWidth <= 320 ? 'mobile' : window.innerWidth <= 768 ? 'tablet' : 'desktop';
 startGame();
 </script>
