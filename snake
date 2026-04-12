@@ -2,6 +2,23 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   .snake { background: transparent; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
   .snake canvas { display: block; background: transparent; image-rendering: pixelated; } 
+  #score {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    color: rgba(252, 111, 47, 1);
+    font-family: custom_175773;
+    font-style: normal;
+    text-align: left;
+    font-size: 50px;
+    font-weight: 500;
+    line-height: 50px;
+    transition: color 0.1s;
+    white-space: nowrap;
+    user-select: none;
+  }
 </style>
 <canvas class="snake" id="c"></canvas>
 
@@ -22,19 +39,22 @@ const BLOCK_COLOR       = '#FC6F2F'; // hex colour for snake & food
 const SPEED             = 0.5;       // game speed multiplier (0.5 = slower, 2 = faster)
 // ============================================================
  
-const TICK_MS = 110 / SPEED;
+const TICK_MS   = 110 / SPEED;
+const COLOR_DEFAULT = 'rgba(252, 111, 47, 1)';
+const COLOR_UNDER   = '#FFEBD2';
  
-const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
+const canvas    = document.getElementById('c');
+const ctx       = canvas.getContext('2d');
+const scoreEl   = document.getElementById('score');
  
 // ---- responsive grid ----
 let GX, GY, BS;
  
 function applyGrid() {
   const w = window.innerWidth;
-  if (w <= 320) { GX = GRID_X_MOBILE; GY = GRID_Y_MOBILE; BS = BLOCK_SIZE_MOBILE; }
-  else if (w <= 768) { GX = GRID_X_TABLET; GY = GRID_Y_TABLET; BS = BLOCK_SIZE_TABLET; }
-  else               { GX = GRID_X;        GY = GRID_Y;        BS = BLOCK_SIZE;        }
+  if (w <= 320)      { GX = GRID_X_MOBILE;  GY = GRID_Y_MOBILE;  BS = BLOCK_SIZE_MOBILE;  }
+  else if (w <= 768) { GX = GRID_X_TABLET;  GY = GRID_Y_TABLET;  BS = BLOCK_SIZE_TABLET;  }
+  else               { GX = GRID_X;         GY = GRID_Y;         BS = BLOCK_SIZE;          }
   canvas.width  = BS * GX;
   canvas.height = BS * GY;
 }
@@ -51,7 +71,7 @@ window.addEventListener('resize', () => {
 });
  
 // ---- state ----
-let snake, dir, nextDir, food, loop, autoplay, playerHasInteracted;
+let snake, dir, nextDir, food, loop, autoplay, playerHasInteracted, score;
  
 function startGame() {
   applyGrid();
@@ -60,6 +80,8 @@ function startGame() {
   snake   = [{ x: cx, y: cy }, { x: cx - 1, y: cy }];
   dir     = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
+  score   = 0;
+  scoreEl.textContent = score;
   autoplay = !playerHasInteracted;
   placeFood();
   clearInterval(loop);
@@ -128,6 +150,8 @@ function tick() {
   snake.unshift(head);
  
   if (head.x === food.x && head.y === food.y) {
+    score++;
+    scoreEl.textContent = score;
     placeFood();
   } else {
     snake.pop();
@@ -136,18 +160,43 @@ function tick() {
   draw();
 }
  
+// ---- score colour: flip when snake overlaps the score element ----
+function updateScoreColor() {
+  // Get the score element's bounding box relative to the canvas
+  const canvasRect = canvas.getBoundingClientRect();
+  const scoreRect  = scoreEl.getBoundingClientRect();
+ 
+  // Convert to canvas pixel space (accounting for any CSS scaling)
+  const scaleX = canvas.width  / canvasRect.width;
+  const scaleY = canvas.height / canvasRect.height;
+ 
+  const left   = (scoreRect.left   - canvasRect.left)  * scaleX;
+  const top    = (scoreRect.top    - canvasRect.top)    * scaleY;
+  const right  = (scoreRect.right  - canvasRect.left)   * scaleX;
+  const bottom = (scoreRect.bottom - canvasRect.top)    * scaleY;
+ 
+  // Check if any snake segment's block overlaps the score bounding box
+  const overlaps = snake.some(seg => {
+    const sx = seg.x * BS;
+    const sy = seg.y * BS;
+    return sx < right && sx + BS > left && sy < bottom && sy + BS > top;
+  });
+ 
+  scoreEl.style.color = overlaps ? COLOR_UNDER : COLOR_DEFAULT;
+}
+ 
 // ---- draw ----
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
  
   ctx.fillStyle = BLOCK_COLOR;
- 
   ctx.fillRect(food.x * BS, food.y * BS, BS, BS);
  
   snake.forEach(seg => {
     ctx.fillRect(seg.x * BS, seg.y * BS, BS, BS);
   });
+ 
+  updateScoreColor();
 }
  
 // ---- hand off to player on first input ----
