@@ -9,15 +9,17 @@
 // ============================================================
 //  EASY-ACCESS VARIABLES — edit these
 // ============================================================
-const BLOCK_SIZE    = 94;        // px — width & height of each cell
-const GRID_X        = 11;        // columns — desktop
-const GRID_Y        = 4;        // rows    — desktop
-const GRID_X_TABLET = 8;         // columns — tablet  (≤ 768px)
-const GRID_Y_TABLET = 8;         // rows    — tablet  (≤ 768px)
-const GRID_X_MOBILE = 6;         // columns — mobile  (≤ 320px)
-const GRID_Y_MOBILE = 6;         // rows    — mobile  (≤ 320px)
-const BLOCK_COLOR   = '#FC6F2F'; // hex colour for snake & food
-const SPEED         = 0.5;         // game speed multiplier (0.5 = slower, 2 = faster)
+const BLOCK_SIZE        = 94;        // px — desktop
+const BLOCK_SIZE_TABLET = 32;        // px — tablet  (≤ 768px)
+const BLOCK_SIZE_MOBILE = 24;        // px — mobile  (≤ 320px)
+const GRID_X            = 11;        // columns — desktop
+const GRID_Y            = 4;        // rows    — desktop
+const GRID_X_TABLET     = 8;         // columns — tablet  (≤ 768px)
+const GRID_Y_TABLET     = 8;         // rows    — tablet  (≤ 768px)
+const GRID_X_MOBILE     = 6;         // columns — mobile  (≤ 320px)
+const GRID_Y_MOBILE     = 6;         // rows    — mobile  (≤ 320px)
+const BLOCK_COLOR       = '#fc6f2f'; // hex colour for snake & food
+const SPEED             = 1;         // game speed multiplier (0.5 = slower, 2 = faster)
 // ============================================================
 
 const TICK_MS = 110 / SPEED;
@@ -26,15 +28,15 @@ const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
 
 // ---- responsive grid ----
-let GX, GY;
+let GX, GY, BS;
 
 function applyGrid() {
   const w = window.innerWidth;
-  if (w <= 320) { GX = GRID_X_MOBILE; GY = GRID_Y_MOBILE; }
-  else if (w <= 768) { GX = GRID_X_TABLET; GY = GRID_Y_TABLET; }
-  else               { GX = GRID_X;        GY = GRID_Y;        }
-  canvas.width  = BLOCK_SIZE * GX;
-  canvas.height = BLOCK_SIZE * GY;
+  if (w <= 320) { GX = GRID_X_MOBILE; GY = GRID_Y_MOBILE; BS = BLOCK_SIZE_MOBILE; }
+  else if (w <= 768) { GX = GRID_X_TABLET; GY = GRID_Y_TABLET; BS = BLOCK_SIZE_TABLET; }
+  else               { GX = GRID_X;        GY = GRID_Y;        BS = BLOCK_SIZE;        }
+  canvas.width  = BS * GX;
+  canvas.height = BS * GY;
 }
 
 // Restart on resize only if the breakpoint bucket changes
@@ -137,14 +139,14 @@ function tick() {
 // ---- draw ----
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const bs = BLOCK_SIZE;
+  
 
   ctx.fillStyle = BLOCK_COLOR;
 
-  ctx.fillRect(food.x * bs, food.y * bs, bs, bs);
+  ctx.fillRect(food.x * BS, food.y * BS, BS, BS);
 
   snake.forEach(seg => {
-    ctx.fillRect(seg.x * bs, seg.y * bs, bs, bs);
+    ctx.fillRect(seg.x * BS, seg.y * BS, BS, BS);
   });
 }
 
