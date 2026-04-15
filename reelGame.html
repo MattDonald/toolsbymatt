@@ -39,6 +39,271 @@
 
 <script>
 
+const BASE_TEMPO = 120;
+const LOOP_BARS = 2;
+const BEATS_PER_BAR = 4;
+const CIRCLE_CIRCUMFERENCE = 301.59;
+
+const baseTickInterval = 60 / BASE_TEMPO;
+const totalBeats = LOOP_BARS * BEATS_PER_BAR;
+
+let audioCtx, drumBuffer, loopSource, masterGain;
+let targetRate = 1.0;
+let currentRate = 0.8 + (Math.random() * 0.4);
+let isActive = false;
+let isSynced = false;
+let engineClosed = false;
+let stopping = false;
+let timeLeft = 10.0;
+const maxTime = 10.0;
+let timerInterval;
+let driftCount = 0;
+let currentLoopPhase = 0;
+let lastTime = 0;
+let nextTickTime = 0;
+
+const timerPath = document.getElementById('timer-path');
+const syncBtn = document.getElementById('sync-btn');
+const container = document.getElementById('reelGame');
+
+const animationData = {"assets":[{"id":"9","layers":[{"ind":8,"ty":4,"ks":{},"ip":0,"op":121,"st":0,"shapes":[{"ty":"rc","p":{"a":0,"k":[602.5,602.5]},"r":{"a":0,"k":0},"s":{"a":0,"k":[1205,1205]}},{"ty":"fl","c":{"a":0,"k":[0,0,0,0]},"o":{"a":0,"k":0}}]},{"ind":0,"ty":4,"ks":{"s":{"a":0,"k":[133.33,133.33]}},"ip":0,"op":121,"st":0,"shapes":[{"ty":"gr","it":[{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":false,"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[602.51,425.08],[602.51,23.37]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":false,"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[602.51,779.84],[602.51,1181.56]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[-331.38,0],[0,-331.35],[331.37,0],[0,331.35]],"o":[[0,-331.35],[331.37,0],[0,331.35],[-331.38,0],[0,0]],"v":[[2.5,602.46],[602.51,2.5],[1202.5,602.46],[602.51,1202.43],[2.51,602.46]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[86.44,0],[0,86.44],[-86.45,0],[0,-86.44]],"o":[[0,86.44],[-86.45,0],[0,-86.44],[86.44,0],[0,0]],"v":[[759.02,602.46],[602.51,758.98],[445.98,602.46],[602.51,445.96],[759.02,602.46]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[6.17,0],[0,6.18],[-6.18,0],[0,-6.17]],"o":[[0,6.18],[-6.18,0],[0,-6.17],[6.17,0],[0,0]],"v":[[613.68,479.49],[602.51,490.67],[591.32,479.49],[602.51,468.31],[613.68,479.49]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[6.18,0],[0,6.18],[-6.17,0],[0,-6.17]],"o":[[0,6.18],[-6.17,0],[0,-6.17],[6.18,0],[0,0]],"v":[[507.18,663.95],[495.99,675.13],[484.81,663.95],[495.99,652.77],[507.18,663.95]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[6.17,0],[0,6.18],[-6.18,0],[0,-6.17]],"o":[[0,6.18],[-6.18,0],[0,-6.17],[6.17,0],[0,0]],"v":[[720.19,663.95],[709.01,675.13],[697.82,663.95],[709.01,652.77],[720.19,663.95]]}}},{"ty":"st","c":{"a":0,"k":[0.99,0.44,0.18,1]},"lc":1,"lj":1,"ml":4,"o":{"a":0,"k":100},"w":{"a":0,"k":5}},{"ty":"tr","o":{"a":0,"k":100},"s":{"a":0,"k":[75,75]}}]},{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,4.63],[4.63,0],[0,-4.63],[-4.63,0]],"o":[[4.63,0],[0,-4.63],[-4.63,0],[0,4.63],[0,0]],"v":[[531.75,506.35],[540.14,497.96],[531.75,489.58],[523.37,497.96],[531.75,506.35]]}}},{"ty":"fl","c":{"a":0,"k":[1,0.92,0.82,1]},"o":{"a":0,"k":100}},{"ty":"tr","o":{"a":0,"k":100}}]},{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,4.63],[4.63,0],[0,-4.63],[-4.63,0]],"o":[[4.63,0],[0,-4.63],[-4.63,0],[0,4.63],[0,0]],"v":[[372,506.35],[380.38,497.96],[372,489.58],[363.61,497.96],[372,506.35]]}}},{"ty":"fl","c":{"a":0,"k":[1,0.92,0.82,1]},"o":{"a":0,"k":100}},{"ty":"tr","o":{"a":0,"k":100}}]},{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,4.63],[4.63,0],[0,-4.63],[-4.63,0]],"o":[[4.63,0],[0,-4.63],[-4.63,0],[0,4.63],[0,0]],"v":[[451.88,368],[460.26,359.62],[451.88,351.23],[443.49,359.62],[451.88,368]]}}},{"ty":"fl","c":{"a":0,"k":[1,0.92,0.82,1]},"o":{"a":0,"k":100}},{"ty":"tr","o":{"a":0,"k":100}}]},{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,64.83],[64.83,0],[0,-64.83],[-64.84,0]],"o":[[64.83,0],[0,-64.83],[-64.84,0],[0,64.83],[0,0]],"v":[[451.88,569.23],[569.27,451.85],[451.88,334.47],[334.49,451.85],[451.88,569.23]]}}},{"ty":"fl","c":{"a":0,"k":[1,0.92,0.82,1]},"o":{"a":0,"k":100}},{"ty":"tr","o":{"a":0,"k":100}}]},{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[-248.53,0],[0,-248.51],[248.53,0],[0,248.51]],"o":[[0,-248.51],[248.53,0],[0,248.52],[-248.53,0],[0,0]],"v":[[1.88,451.85],[451.88,1.88],[901.88,451.85],[451.88,901.82],[1.88,451.85]]}}},{"ty":"fl","c":{"a":0,"k":[1,0.92,0.82,1]},"o":{"a":0,"k":100}},{"ty":"tr","o":{"a":0,"k":100}}]},{"ty":"tr","o":{"a":0,"k":100}}]}]}]},{"id":"12","layers":[{"ind":5,"ty":4,"parent":4,"ks":{},"ip":0,"op":121,"st":0,"shapes":[{"ty":"gr","it":[{"ty":"rc","p":{"a":0,"k":[446.312,23.961]},"r":{"a":0,"k":0},"s":{"a":0,"k":[902.624,57.922]}},{"ty":"fl","c":{"a":0,"k":[0,0,0,0]},"o":{"a":0,"k":0}},{"ty":"tr","o":{"a":0,"k":100}}]},{"ty":"gr","it":[{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0.3,5.2],[0,0],[-3.5,0],[-0.2,6],[3.4,0],[0,5.3],[-5.3,-0.1],[0,-7.8],[8.7,0],[0,0]],"v":[[8.8,39],[0.2,31.3],[3.1,31.3],[8.7,36.6],[16,22.3],[8.6,27.1],[0,17.9],[9.2,8.6],[18.4,22.3],[8.8,39],[8.8,39]],"o":[[-4.8,0],[0,0],[0.2,3.5],[6.7,0],[-1.5,3.1],[-5.2,0],[0,-5.5],[6.9,0.1],[0,6.6],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,-4],[-3.9,0],[0,4.2],[3.8,0],[0,0]],"v":[[9.2,10.8],[2.7,17.9],[8.8,24.8],[15.4,17.8],[9.2,10.8],[9.2,10.8]],"o":[[-3.9,0],[0,3.9],[4,0],[0,-3.9],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,6.9],[-7.9,0],[0,-4.1],[0,0],[3.6,0],[0.1,-5.1],[-3.4,0],[0,-5.4],[5.3,0],[0,0]],"v":[[32.6,38.8],[22.8,24.5],[32.7,8.6],[41.1,16.1],[38.2,16.1],[32.7,10.8],[25.5,24.2],[32.9,19.4],[41.4,29],[32.6,38.8],[32.6,38.8]],"o":[[-8.1,0],[0,-7.9],[5.6,0],[0,0],[-0.3,-3.4],[-6.4,0],[1.4,-3.2],[5.5,0],[0,5.3],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,-4.2],[-4,0],[0,4.1],[4.1,0]],"v":[[32.7,21.6],[26,29.1],[32.4,36.4],[38.6,28.9],[32.7,21.6]],"o":[[-4.2,0],[0,3.9],[4.2,0],[0,-4],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0],[0,0],[0,0]],"v":[[57.2,38.8],[54.7,38.8],[64.3,8.6],[66.8,8.6],[57.2,38.8]],"o":[[0,0],[0,0],[0,0],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[-2.6,4.9],[0,1.3],[3.3,0],[0,-3.7],[0,0],[-4.9,0],[0,-5],[2.5,-3],[3,-2.9],[0,0],[0,0],[0,0],[0,0]],"v":[[80.2,38.4],[80.2,35.6],[93.8,20.1],[94.7,16.3],[89.1,10.8],[83.2,16.9],[80.5,16.9],[89.2,8.6],[97.5,16.1],[91.9,26.9],[83,36.1],[97.8,36.1],[97.8,38.4],[80.2,38.4],[80.2,38.4]],"o":[[0,0],[4.1,-3.8],[0.6,-1.1],[0,-3.5],[-3.5,0],[0,0],[0.1,-5.3],[4.7,0],[0,4.2],[-2.7,3.2],[0,0],[0,0],[0,0],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],"v":[[117.8,31.8],[117.8,38.4],[115.1,38.4],[115.1,31.8],[102,31.8],[102,29],[114.5,9.1],[117.8,9.1],[117.8,29.6],[122.3,29.6],[122.3,31.8],[117.8,31.8]],"o":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0],[0,0],[0,0]],"v":[[115.2,11.9],[104.3,29.6],[115.2,29.6],[115.2,11.9],[115.2,11.9]],"o":[[0,0],[0,0],[0,0],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[2.2,-1.3],[2.7,0],[2.7,-2.8],[0,-3.9],[-2.7,-2.8],[-3.9,-0.1],[-2.2,1.3],[-2.8,0],[0,8.3],[8.3,0]],"v":[[791.3,8.9],[783.8,11],[776.2,8.9],[765.8,13.4],[761.5,24],[765.8,34.5],[776.2,39.1],[783.8,37],[791.3,39.1],[806.4,24],[791.3,8.9]],"o":[[-2.8,0],[-2.3,-1.4],[-3.9,0.1],[-2.7,2.8],[0,3.9],[2.7,2.8],[2.8,0],[2.2,1.3],[8.3,0],[0,-8.3],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[2.5,2.6],[0,3.6],[-2.5,2.6],[-3.6,0.1],[-2,-1],[0,-5.1],[-3.9,-2.7],[2.4,0]],"v":[[776.2,38],[766.6,33.7],[762.6,24],[766.6,14.2],[776.2,9.9],[782.7,11.6],[776.2,24],[782.7,36.4],[776.2,38]],"o":[[-3.6,-0.1],[-2.5,-2.6],[0,-3.6],[2.5,-2.6],[2.4,0],[-3.9,2.7],[0,5.1],[-2,1],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,-5],[3.9,-2.5],[0,5],[-3.9,2.5]],"v":[[783.8,12.1],[790.3,24],[783.8,35.8],[777.3,24],[783.8,12.1]],"o":[[3.9,2.5],[0,5],[-3.9,-2.5],[0,-5],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[2,1.1],[0,5.1],[3.9,2.7],[-2.3,0],[0,-7.8],[7.7,0]],"v":[[791.3,38],[784.8,36.4],[791.3,24],[784.8,11.6],[791.3,9.9],[805.4,24],[791.3,38]],"o":[[-2.3,0],[3.9,-2.7],[0,-5.1],[2,-1.1],[7.7,0],[0,7.8],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0.3,5.5],[0,0],[-3.4,0],[0,4],[3.6,0],[0.5,-0.1],[0,0],[-0.5,0],[0,3.6],[3.3,0],[0.4,-3.8],[0,0],[-4.6,0],[0,-5.4],[3.1,-0.9],[0,-3.9],[4.8,0]],"v":[[729.9,39.1],[720.8,30.9],[723.5,30.9],[730.1,36.9],[736.8,30.6],[730.1,24.5],[728.5,24.6],[728.5,22.2],[730.2,22.3],[736.3,16.7],[730,11],[723.8,16.7],[721.2,16.7],[730,8.8],[738.9,16.6],[733.6,23.3],[739.7,30.8],[729.9,39.1]],"o":[[-5,0],[0,0],[0,3.8],[3.6,0],[0,-4],[-0.5,0],[0,0],[0.5,0.1],[3.2,0],[0,-3.8],[-3.6,0],[0,0],[0.2,-5.1],[4.6,0],[0,3.5],[3.6,0.7],[0,5.6],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],"v":[[878.3,38.6],[878.3,11.6],[867.3,38.6],[864.8,38.6],[853.7,11.6],[853.7,38.6],[851.3,38.6],[851.3,9.4],[855.6,9.4],[866.1,35.5],[876.6,9.4],[880.9,9.4],[880.9,38.6],[878.3,38.6]],"o":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0.6,0.6],[0,0.8],[0,0],[-1.7,0],[0,0],[0,-1.7],[0,0],[1.7,0]],"v":[[889.5,47.9],[842.7,47.9],[840.5,47],[839.6,44.8],[839.6,3.1],[842.7,0],[889.5,0],[892.6,3.1],[892.6,44.8],[889.5,47.9]],"o":[[0,0],[-0.8,0],[-0.6,-0.6],[0,0],[0,-1.7],[0,0],[1.7,0],[0,0],[0,1.7],[0,0]]}}},{"ty":"sh","ks":{"a":0,"k":{"c":true,"i":[[0,0],[0.3,-0.1],[0.2,-0.2],[0.1,-0.3],[0,-0.3],[0,0],[-1.1,0],[0,0],[-0.4,0.4],[0,0.6],[0,0],[0.4,0.4],[0.6,0],[0,0]],"v":[[842.7,1],[841.9,1.2],[841.2,1.7],[840.7,2.3],[840.6,3.1],[840.6,44.8],[842.7,46.9],[889.5,46.9],[891,46.3],[891.6,44.8],[891.6,3.1],[891,1.7],[889.5,1],[842.7,1]],"o":[[-0.3,0],[-0.3,0.1],[-0.2,0.2],[-0.1,0.3],[0,0],[0,1.1],[0,0],[0.6,0],[0.4,-0.4],[0,0],[0,-0.6],[-0.4,-0.4],[0,0],[0,0]]}}},{"ty":"st","c":{"a":0,"k":[0.988,0.435,0.184]},"lc":1,"lj":1,"ml":10,"o":{"a":0,"k":100},"w":{"a":0,"k":1}},{"ty":"fl","c":{"a":0,"k":[0.988,0.435,0.184]},"o":{"a":0,"k":100}},{"ty":"tr","o":{"a":0,"k":100}}]}]},{"ind":4,"ty":3,"parent":3,"ks":{"a":{"a":0,"k":[446.312,23.961]},"p":{"a":0,"k":[614.472,600.678]}},"ip":0,"op":121,"st":0},{"ind":11,"ty":0,"parent":7,"ks":{},"w":1205,"h":1205,"ip":0,"op":121,"st":0,"refId":"9"},{"ind":7,"ty":3,"parent":6,"ks":{"s":{"a":0,"k":[100.08,100.08]}},"ip":0,"op":121,"st":0},{"ind":6,"ty":3,"parent":3,"ks":{"a":{"a":0,"k":[603,603]},"p":{"a":0,"k":[600,600]}},"ip":0,"op":121,"st":0},{"ind":3,"ty":3,"ks":{"p":{"a":0,"k":[27,27]}},"ip":0,"op":121,"st":0}]}],"fr":60,"h":1254,"ip":0,"layers":[{"ind":14,"ty":0,"parent":2,"ks":{},"w":1254,"h":1254,"ip":0,"op":121,"st":0,"refId":"12"},{"ind":2,"ty":3,"parent":1,"ks":{"a":{"a":0,"k":[627,627]},"p":{"a":0,"k":[627,627]},"r":{"a":1,"k":[{"t":0,"s":[0],"i":{"x":1,"y":1},"o":{"x":0,"y":0}},{"t":120,"s":[360],"h":1}]}},"ip":0,"op":121,"st":0},{"ind":1,"ty":3,"parent":0,"ks":{},"ip":0,"op":121,"st":0},{"ind":0,"ty":3,"ks":{},"ip":0,"op":121,"st":0}],"meta":{"g":"https://jitter.video"},"op":120,"v":"5.7.4","w":1254};
+
+const player = lottie.loadAnimation({
+  container: document.getElementById('tp7-player'),
+  animationData: animationData,
+  renderer: 'svg',
+  loop: true,
+  autoplay: false
+});
+
+const totalFrames = animationData.op - animationData.ip; // 120
+
+function playerSeek(pct) {
+  player.goToAndPlay(Math.round(pct / 100 * totalFrames), true);
+}
+
+function updateButtonState() {
+  if (isSynced || stopping) return;
+  if (!isActive) {
+    syncBtn.innerHTML = '<span class="action-word"></span> the reel to play';
+    syncBtn.classList.remove('clickable', 'warning');
+    return;
+  }
+  if (timeLeft < 3) {
+    syncBtn.innerHTML = "tempo change coming";
+    syncBtn.classList.add('warning');
+    syncBtn.classList.remove('clickable');
+  } else {
+    syncBtn.classList.remove('warning');
+    const diff = Math.abs(currentRate - targetRate);
+    if (diff < 0.005) {
+      syncBtn.innerHTML = "in sync";
+      if (driftCount > 0) syncBtn.classList.add('clickable');
+      else syncBtn.classList.remove('clickable');
+    } else if (driftCount === 0) {
+      syncBtn.innerHTML = "scroll up + down to pitch";
+      syncBtn.classList.remove('clickable');
+    } else {
+      syncBtn.innerHTML = "use tp7_speed_sync";
+      syncBtn.classList.add('clickable');
+    }
+  }
+}
+
+async function startEngine() {
+  if (isActive || engineClosed) return;
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  syncBtn.innerHTML = "loading...";
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/gh/mattdonald/toolsbymatt@v1.0/120_ASH_TOM_LOOP_A.wav');
+    const arrayBuffer = await res.arrayBuffer();
+    drumBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    masterGain = audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+    createSource();
+    let now = audioCtx.currentTime;
+    nextTickTime = now + 0.1;
+    lastTime = now;
+    scheduleMetronome();
+    requestAnimationFrame(updatePhase);
+    player.play();
+    player.setSpeed(currentRate);
+    isActive = true;
+    updateButtonState();
+    startTimer();
+    container.focus();
+  } catch (e) {
+    syncBtn.innerHTML = "audio error";
+    console.error(e);
+  }
+}
+
+function createSource() {
+  if (loopSource) try { loopSource.stop(); } catch(e){}
+  loopSource = audioCtx.createBufferSource();
+  loopSource.buffer = drumBuffer;
+  loopSource.loop = true;
+  loopSource.playbackRate.value = currentRate;
+  loopSource.connect(masterGain);
+  loopSource.start(0);
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = maxTime;
+  timerInterval = setInterval(() => {
+    if (isSynced || stopping) { clearInterval(timerInterval); return; }
+    timeLeft -= 0.1;
+    const offset = CIRCLE_CIRCUMFERENCE - (timeLeft / maxTime) * CIRCLE_CIRCUMFERENCE;
+    timerPath.style.strokeDashoffset = offset;
+    updateButtonState();
+    if (timeLeft <= 0) triggerDrift();
+  }, 100);
+}
+
+function triggerDrift() {
+  isSynced = false;
+  targetRate = 0.8 + (Math.random() * 0.5);
+  let driftOffset = (Math.random() > 0.5 ? 0.15 : -0.15) + (Math.random() * 0.05);
+  currentRate = targetRate + driftOffset;
+  currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
+  loopSource.playbackRate.setTargetAtTime(currentRate, audioCtx.currentTime, 0.2);
+  player.setSpeed(currentRate);
+  driftCount++;
+  timeLeft = maxTime;
+  updateButtonState();
+}
+
+function performSync() {
+  if (!isActive || isSynced) return;
+  isSynced = true;
+  currentRate = targetRate;
+  clearInterval(timerInterval);
+  syncBtn.classList.remove('warning', 'clickable');
+  timerPath.style.stroke = "rgba(252, 111, 47, 0.2)";
+  let now = audioCtx.currentTime;
+  let portionDuration = drumBuffer.duration / totalBeats;
+  let nearestPortion = Math.round(currentLoopPhase / portionDuration) % totalBeats;
+  let currentTickInterval = baseTickInterval / targetRate;
+  let timeSinceLastClick = Math.max(0, now - (nextTickTime - currentTickInterval));
+  let snappedOffset = ((nearestPortion * portionDuration) + (timeSinceLastClick * targetRate)) % drumBuffer.duration;
+  loopSource.stop();
+  loopSource = audioCtx.createBufferSource();
+  loopSource.buffer = drumBuffer;
+  loopSource.loop = true;
+  loopSource.playbackRate.value = targetRate;
+  loopSource.connect(masterGain);
+  loopSource.start(now, snappedOffset);
+  currentRate = targetRate;
+  player.setSpeed(targetRate);
+  playerSeek((snappedOffset / drumBuffer.duration) * 100);
+  syncBtn.innerHTML = "in sync + on grid";
+}
+
+function tapeStopEngine() {
+  if (engineClosed || !isActive || stopping) return;
+  stopping = true;
+  isSynced = false;
+  const stopDuration = 1.5;
+  const now = audioCtx.currentTime;
+  loopSource.playbackRate.setValueAtTime(loopSource.playbackRate.value, now);
+  loopSource.playbackRate.exponentialRampToValueAtTime(0.01, now + stopDuration);
+  player.setSpeed(0.1);
+  setTimeout(() => player.pause(), stopDuration * 1000);
+  syncBtn.innerHTML = "stopped";
+  timerPath.style.opacity = "0";
+  setTimeout(() => {
+    if (loopSource) try { loopSource.stop(); } catch(e){}
+    if (audioCtx) audioCtx.close();
+    engineClosed = true;
+    isActive = false;
+  }, (stopDuration + 0.1) * 1000);
+}
+
+container.addEventListener('wheel', (e) => {
+  if (e.target.closest('#sync-btn')) return;
+  if (engineClosed || stopping || !isActive) return;
+  if (isSynced) { tapeStopEngine(); return; }
+  e.preventDefault();
+  e.stopPropagation();
+  currentRate += e.deltaY * -0.0007;
+  currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
+  loopSource.playbackRate.value = currentRate;
+  player.setSpeed(currentRate);
+  updateButtonState();
+}, { passive: false });
+
+let lastTouchY = 0;
+
+container.addEventListener('touchstart', (e) => {
+  if (e.target.closest('#sync-btn')) return;
+  if (!isActive || engineClosed || stopping) return;
+  lastTouchY = e.touches[0].clientY;
+}, { passive: true });
+
+container.addEventListener('touchmove', (e) => {
+  if (e.target.closest('#sync-btn')) return;
+  if (!isActive || engineClosed || stopping) return;
+  if (isSynced) { tapeStopEngine(); return; }
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
+  const currentTouchY = e.touches[0].clientY;
+  currentRate += (lastTouchY - currentTouchY) * 0.002;
+  currentRate = Math.min(Math.max(currentRate, 0.5), 1.5);
+  loopSource.playbackRate.value = currentRate;
+  player.setSpeed(currentRate);
+  lastTouchY = currentTouchY;
+  updateButtonState();
+}, { passive: false });
+
+function scheduleMetronome() {
+  if (engineClosed || stopping) return;
+  let now = audioCtx.currentTime;
+  let currentTickInterval = baseTickInterval / targetRate;
+  while (nextTickTime < now + 0.1) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g); g.connect(masterGain);
+    osc.frequency.value = 1000;
+    g.gain.setValueAtTime(0.4, nextTickTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, nextTickTime + 0.05);
+    osc.start(nextTickTime); osc.stop(nextTickTime + 0.05);
+    nextTickTime += currentTickInterval;
+  }
+  setTimeout(scheduleMetronome, 50);
+}
+
+function updatePhase() {
+  if (isActive && !isSynced) {
+    let now = audioCtx.currentTime;
+    currentLoopPhase += (now - lastTime) * currentRate;
+    currentLoopPhase %= drumBuffer.duration;
+    lastTime = now;
+  }
+  if (!engineClosed) requestAnimationFrame(updatePhase);
+}
+
+syncBtn.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  if (!isActive) {
+    startEngine();
+  } else if (syncBtn.classList.contains('clickable')) {
+    performSync();
+  }
+});
+
+document.getElementById('tp7-player').addEventListener('click', (e) => {
+  if (!isActive) startEngine();
+});
+
+</script>
+</div>
+
+<script>
+
 // --- GLOBAL CONFIGURATION ---
 
 const BASE_TEMPO = 120;
