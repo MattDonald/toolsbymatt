@@ -27,12 +27,12 @@ const PRODUCTS = {
   'chroma_control': [process.env.PRODUCT_4_LINK],
   'subphatty_sync': [process.env.PRODUCT_5_LINK],
   'art_tools': [process.env.PRODUCT_6_LINK],
-
   'tp7_tools': [
     process.env.PRODUCT_1_LINK,
     process.env.PRODUCT_2_LINK,
     process.env.PRODUCT_3_LINK,
   ],
+  'free_sample_pack': [process.env.FREE_PRODUCT_LINK],
 };
 
 // Product metadata: display name for each Dropbox link
@@ -43,6 +43,7 @@ const PRODUCT_META = {
   [process.env.PRODUCT_4_LINK]: 'chroma_control',
   [process.env.PRODUCT_5_LINK]: 'subphatty_sync',
   [process.env.PRODUCT_6_LINK]: 'art_tools',
+  [process.env.FREE_PRODUCT_LINK]: 'free_sample_pack',
 };
 
 // Token store: active 48-hour download tokens held in memory
@@ -69,7 +70,7 @@ app.get("/download", (req, res) => {
   res.redirect(record.dropboxLink);
 });
 
-// Form signup route: Readymag sends form data here
+// Form signup route: Readymag sends form data here for marketing list only
 app.post("/signup", express.urlencoded({ extended: true }), express.json(), async (req, res) => {
   console.log("Signup request body:", req.body);
   
@@ -97,6 +98,52 @@ app.post("/signup", express.urlencoded({ extended: true }), express.json(), asyn
     console.error("Signup error:", err.response?.data || err.message);
     res.status(500).json({ error: "Signup failed" });
   }
+});
+
+// Free product route: Readymag form for free download with marketing consent
+app.post("/free-product", express.urlencoded({ extended: true }), express.json(), async (req, res) => {
+  console.log("Free product request body:", req.body);
+  
+  // Extract email from Readymag's nested format
+  let emailAddress;
+  emailAddress = req.body.Email || req.body.email;
+  if (!emailAddress && req.body['0']) {
+    emailAddress = req.body['0'].email || req.body['0'].Email;
+  }
+  
+  if (!emailAddress) {
+    console.error("No email found in free product request:", req.body);
+    return res.status(400).json({ error: "Email required" });
+  }
+  
+  // Respond immediately
+  res.json({ success: true });
+  
+  // Free product details
+  const freeProductName = 'free_sample_pack';
+  const dropboxLinks = PRODUCTS[freeProductName];
+  
+  if (!dropboxLinks) {
+    console.error("Free product not configured:", freeProductName);
+    return;
+  }
+  
+  // Generate download token (48 hour expiry)
+  const downloadUrls = dropboxLinks.map((link, index) => {
+    const token = createToken(link, `${freeProductName} - File ${index + 1}`);
+    return `${process.env.RENDER_URL}/download?token=${token}`;
+  });
+  
+  const productNames = dropboxLinks.map(link => PRODUCT_META[link] || freeProductName);
+  
+  // Add to BOTH lists: Customers (with free product) AND Marketing Subscribers (with consent)
+  await Promise.all([
+    addToCustomersList(emailAddress, emailAddress, freeProductName),
+    addToMarketingList(emailAddress),
+    sendFreeProductEmail(emailAddress, freeProductName, downloadUrls, productNames),
+  ]);
+  
+  console.log(`Free product sent to: ${emailAddress}`);
 });
 
 // Webhook route: Stripe fires this after a successful payment
@@ -211,6 +258,25 @@ async function addToSignupPendingList(email) {
   }
 }
 
+// Add contact directly to Marketing Subscribers list (explicit consent given)
+async function addToMarketingList(email) {
+  const contactData = {
+    email: email,
+    listIds: [parseInt(process.env.MARKETING_SUBSCRIBERS_LIST_ID)],
+    updateEnabled: true,
+    attributes: {
+      SOURCE: 'free_product',
+    }
+  };
+
+  try {
+    await brevoAPI.post('/contacts', contactData);
+    console.log(`Added to Marketing Subscribers list: ${email}`);
+  } catch (err) {
+    console.error("Brevo marketing list error:", err.response?.data || err.message);
+  }
+}
+
 // Send the transactional download email via Brevo template
 async function sendDownloadEmail(email, firstName, productName, downloadUrls) {
   // Get the Dropbox links for this product to look up display names
@@ -243,6 +309,36 @@ async function sendDownloadEmail(email, firstName, productName, downloadUrls) {
     console.log(`Download email sent to: ${email}`);
   } catch (err) {
     console.error("Brevo email error:", err.response?.data || err.message);
+  }
+}
+
+// Send free product download email
+async function sendFreeProductEmail(email, productName, downloadUrls, productNames) {
+  const emailData = {
+    to: [{ email: email }],
+    sender: { name: 'Matt Donald', email: process.env.BREVO_SENDER_EMAIL },
+    templateId: parseInt(process.env.BREVO_FREE_PRODUCT_TEMPLATE_ID),
+    params: {
+      firstName: 'there',
+      productName,
+      downloadUrl1: downloadUrls[0] || '',
+      downloadUrl2: downloadUrls[1] || '',
+      downloadUrl3: downloadUrls[2] || '',
+      downloadUrl4: downloadUrls[3] || '',
+      downloadUrl5: downloadUrls[4] || '',
+      productName1: productNames[0] || '',
+      productName2: productNames[1] || '',
+      productName3: productNames[2] || '',
+      productName4: productNames[3] || '',
+      productName5: productNames[4] || '',
+    }
+  };
+
+  try {
+    await brevoAPI.post('/smtp/email', emailData);
+    console.log(`Free product email sent to: ${email}`);
+  } catch (err) {
+    console.error("Brevo free product email error:", err.response?.data || err.message);
   }
 }
 
