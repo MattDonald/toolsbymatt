@@ -4,6 +4,7 @@
   #acidize #dropZone.loaded { padding: 12px 20px; cursor: pointer; }
   #acidize h2, #acidize #bpmRow .bpm-label, #acidize #bpmRow .slash { color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; text-align: center; font-size: 50px; font-weight: 500; line-height: 50px; margin: 40px 0; }
   #acidize h2.loaded { font-size: 18px; margin: 0; line-height: 25px; }
+  #acidize h3 { font-family: JetBrains Mono; font-weight: 400; font-size: 20px; line-height: 30px; font-style: italic; color: rgba(252, 111, 47, 1); text-align: left; font-variation-settings: 'wght' 600; margin: 20px 0 0 0; }
   #acidize #bottomArea { margin-top: -50px; text-align: center; }
   #acidize #bpmRow { display: none; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; color: #FC6F2F; }
   #acidize #bpmRow input[type="number"], #acidize #bpmRow select { background: transparent; border: none; color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; font-size: 50px; font-weight: 500; width: auto; min-width: 60px; outline: none; text-align: right; -moz-appearance: textfield; appearance: textfield; }
@@ -12,8 +13,9 @@
   #acidize #bpmRow select { width: 80px; cursor: pointer; }
   #acidize #bpmLine, #acidize #timeSigLine { display: flex; align-items: center; justify-content: center; gap: 8px; }
   #acidize #bpmLine { position: relative; left: -20px; }
-  #acidize #acidizeBtn { display: none; margin-top: -10px; background: #FC6F2F; color: #FFEBD2; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: pointer; line-height: 1; }
-  #acidize #acidizeBtn:hover { background: #FFEBD2; color: #FC6F2F; }
+  #acidize #acidizeBtn { display: none; margin-top: -10px; background: #FFEBD2; color: #FC6F2F; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: not-allowed; line-height: 1; }
+  #acidize #acidizeBtn:not(:disabled) { background: #FC6F2F; color: #FFEBD2; cursor: pointer; }
+  #acidize #acidizeBtn:not(:disabled):hover { background: #FFEBD2; color: #FC6F2F; }
   #acidize #acidizeStatus { color: rgba(252, 111, 47, 1); font-family: JetBrains Mono; font-style: italic; text-align: center; font-size: 12px; font-weight: 400; line-height: 20px; font-variation-settings: 'wght' 600; margin-top: 12px; }
   @media screen and (max-width: 320px) {
     #acidize #bpmRow .bpm-label, #acidize #bpmRow .slash { margin: 0; }
@@ -35,6 +37,228 @@
     <div id="bpmRow">
       <div id="bpmLine">
         <input type="number" id="bpm" min="20" max="300" step="0.01" placeholder="123">
+        <span class="bpm-label">bpm</span>
+      </div>
+      <div id="timeSigLine">
+        <select id="numerator">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+        </select>
+        <span class="slash">/</span>
+        <select id="denominator">
+          <option value="2">2</option>
+          <option value="4" selected>4</option>
+          <option value="8">8</option>
+          <option value="16">16</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="acidizeBtn" disabled>acidize</button>
+  </div>
+
+  <div id="acidizeStatus"></div>
+
+</div>
+
+<script>
+  (function() {
+    let selectedFile = null;
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function el(id) { return document.getElementById(id); }
+    function inside(e, id) { const n = el(id); return n && n.contains(e.target); }
+
+    function setStatus(html) {
+      const s = el('acidizeStatus');
+      if (s) s.innerHTML = html;
+    }
+
+    function updateBtn() {
+      const btn = el('acidizeBtn');
+      const bpm = el('bpm');
+      if (!btn || !bpm) return;
+      btn.disabled = !bpm.value;
+      setStatus(bpm.value ? '' : (selectedFile ? '<h3>enter a bpm to acidize</h3>' : ''));
+    }
+
+    // ── Document-level listeners ───────────────────────────────────────────
+
+    document.addEventListener('click', e => {
+      // Drop zone click
+      if (inside(e, 'dropZone')) {
+        const fi = el('fileInput');
+        if (fi) fi.click();
+      }
+      // Acidize button click
+      if (inside(e, 'acidizeBtn') && !el('acidizeBtn').disabled) {
+        runAcidize();
+      }
+    });
+
+    document.addEventListener('dragover', e => {
+      if (inside(e, 'dropZone')) {
+        e.preventDefault();
+        el('dropZone').classList.add('hover');
+      }
+    });
+
+    document.addEventListener('dragleave', e => {
+      const dz = el('dropZone');
+      if (dz && !dz.contains(e.relatedTarget)) {
+        dz.classList.remove('hover');
+      }
+    });
+
+    document.addEventListener('drop', e => {
+      if (!inside(e, 'dropZone')) return;
+      e.preventDefault();
+      el('dropZone').classList.remove('hover');
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+
+    document.addEventListener('change', e => {
+      if (e.target.id === 'fileInput' && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    document.addEventListener('input', e => {
+      if (e.target.id === 'bpm') {
+        const bpmInput = el('bpm');
+        bpmInput.style.width = ((bpmInput.value.length || bpmInput.placeholder.length) + 1) + 'ch';
+        updateBtn();
+      }
+    });
+
+    // ── File handling ──────────────────────────────────────────────────────
+
+    function handleFile(file) {
+      if (!file.name.toLowerCase().endsWith('.wav')) {
+        setStatus('<h3>wav files only.</h3>');
+        return;
+      }
+      selectedFile = file;
+
+      const dz = el('dropZone');
+      dz.classList.add('loaded');
+      dz.innerHTML = '<input type="file" id="fileInput" accept=".wav,audio/wav" style="display:none"><h2 class="loaded">add another .wav to acidize</h2>';
+
+      const fnd = el('fileNameDisplay');
+      fnd.textContent = 'file: ' + file.name;
+      fnd.style.display = 'block';
+
+      const bpmRow = el('bpmRow');
+      bpmRow.style.display = 'flex';
+
+      const btn = el('acidizeBtn');
+      btn.style.display = 'inline-block';
+
+      // set width for existing bpm value if any
+      const bpmInput = el('bpm');
+      bpmInput.style.width = ((bpmInput.value.length || bpmInput.placeholder.length) + 1) + 'ch';
+
+      updateBtn();
+    }
+
+    // ── Acidize ────────────────────────────────────────────────────────────
+
+    async function runAcidize() {
+      if (!selectedFile) return;
+
+      const bpm = parseFloat(el('bpm').value);
+      const numerator = parseInt(el('numerator').value);
+      const denominator = parseInt(el('denominator').value);
+
+      if (!bpm || bpm < 20 || bpm > 300) return;
+
+      setStatus('');
+
+      try {
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const wav = new Uint8Array(arrayBuffer);
+
+        const header = new TextDecoder('ascii').decode(wav.slice(0, 200));
+        if (header.includes('acid')) {
+          setStatus('<h3>this file already contains acid metadata.</h3>');
+          return;
+        }
+
+        const fmtPos = findChunk(wav, 'fmt ');
+        if (fmtPos === -1) {
+          setStatus('<h3>could not find fmt chunk — is this a valid wav file?</h3>');
+          return;
+        }
+
+        const fmtSize = readUInt32LE(wav, fmtPos + 4);
+        const dataPos = fmtPos + 8 + fmtSize;
+
+        const acidChunk = new Uint8Array(32);
+        const view = new DataView(acidChunk.buffer);
+        acidChunk.set([0x61, 0x63, 0x69, 0x64], 0);
+        view.setUint32(4, 24, true);
+        view.setUint32(8, 0x01, true);
+        view.setUint16(12, 48, true);
+        view.setUint16(14, 0x8000, true);
+        view.setFloat32(16, 0, true);
+        view.setUint32(20, 0, true);
+        view.setUint16(24, denominator, true);
+        view.setUint16(26, numerator, true);
+        view.setFloat32(28, bpm, true);
+
+        const before = wav.slice(0, dataPos);
+        const after = wav.slice(dataPos);
+        const newWav = new Uint8Array(before.length + acidChunk.length + after.length);
+        newWav.set(before, 0);
+        newWav.set(acidChunk, before.length);
+        newWav.set(after, before.length + acidChunk.length);
+
+        const riffView = new DataView(newWav.buffer);
+        riffView.setUint32(4, newWav.length - 8, true);
+
+        const newDataPos = dataPos + 32;
+        const dataSize = newWav.length - newDataPos - 8;
+        riffView.setUint32(newDataPos + 4, dataSize, true);
+
+        const blob = new Blob([newWav], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = selectedFile.name.replace(/\.wav$/i, '') + '_' + bpm + 'bpm.wav';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        setStatus('');
+
+      } catch (err) {
+        setStatus('<h3>error: ' + err.message + '</h3>');
+      }
+    }
+
+    // ── Utilities ──────────────────────────────────────────────────────────
+
+    function findChunk(wav, id) {
+      const idBytes = id.split('').map(c => c.charCodeAt(0));
+      for (let i = 12; i < wav.length - 8; i++) {
+        if (wav[i] === idBytes[0] && wav[i+1] === idBytes[1] &&
+            wav[i+2] === idBytes[2] && wav[i+3] === idBytes[3]) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    function readUInt32LE(buf, offset) {
+      return buf[offset] | (buf[offset+1] << 8) | (buf[offset+2] << 16) | (buf[offset+3] << 24);
+    }
+
+  })();
+</script>        <input type="number" id="bpm" min="20" max="300" step="0.01" placeholder="123">
         <span class="bpm-label">bpm</span>
       </div>
       <div id="timeSigLine">
