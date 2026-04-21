@@ -1,6 +1,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-  #epRemapper { text-transform: lowercase; width: 100%; }
+    #epRemapper { text-transform: lowercase; width: 100%; }
   #epRemapper .table-wrap { overflow-y: auto; max-height: calc(5 * 37px + 41px); margin: 16px 0; }
   #epRemapper table { border-collapse: collapse; width: 100%; margin: 0; }
   #epRemapper th, #epRemapper td { border-bottom: 1px solid #FC6F2F; padding: 6px 10px; text-align: left; }
@@ -57,20 +57,29 @@ const GROUPS = ['a','b','c','d'];
 let state = null; // parsed project data
 let zip = null;   // the original JSZip instance
 
-// ── Drop zone ──────────────────────────────────────────────────────────────
+// ── Drop zone — listeners on document so they survive full widget rebuilds ──
 
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
+const getDropZone  = () => document.getElementById('drop-zone');
+const getFileInput = () => document.getElementById('file-input');
 
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('hover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
-dropZone.addEventListener('drop', e => {
+document.addEventListener('click', e => {
+  if (e.target.closest('#drop-zone')) getFileInput() && getFileInput().click();
+});
+document.addEventListener('dragover', e => {
+  if (e.target.closest('#drop-zone')) { e.preventDefault(); getDropZone() && getDropZone().classList.add('hover'); }
+});
+document.addEventListener('dragleave', e => {
+  if (e.target.closest('#drop-zone')) getDropZone() && getDropZone().classList.remove('hover');
+});
+document.addEventListener('drop', e => {
+  if (!e.target.closest('#drop-zone')) return;
   e.preventDefault();
-  dropZone.classList.remove('hover');
+  getDropZone() && getDropZone().classList.remove('hover');
   handleFile(e.dataTransfer.files[0]);
 });
-fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+document.addEventListener('change', e => {
+  if (e.target.id === 'file-input') handleFile(e.target.files[0]);
+});
 
 // ── File handling ──────────────────────────────────────────────────────────
 
@@ -87,9 +96,9 @@ async function handleFile(file) {
     const arrayBuffer = await file.arrayBuffer();
     zip = await JSZip.loadAsync(arrayBuffer);
     state = await parsePpak(zip, file.name);
-    dropZone.classList.add('loaded');
-    dropZone.querySelector('h2').textContent = 'add another .ppak file to remap';
-    dropZone.querySelector('h2').classList.add('loaded');
+    getDropZone().classList.add('loaded');
+    getDropZone().querySelector('h2').textContent = 'add another .ppak file to remap';
+    getDropZone().querySelector('h2').classList.add('loaded');
     renderAll();
   } catch (err) {
     sections.innerHTML = `<h3 class="error">error parsing file: ${err.message}</h3>`;
