@@ -310,85 +310,165 @@ function clearPresetActive(){
 }
 
 // ── Seg controls ───────────────────────────────────────────────────────
-function setupSeg(segId,onChange){
-  document.getElementById(segId).querySelectorAll('.btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.getElementById(segId).querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      onChange(btn.dataset.val);
-    });
-  });
+// Not called at init — delegation handles seg clicks below
+function activateSeg(segId, val){
+  document.getElementById(segId)?.querySelectorAll('.btn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
 }
-setupSeg('filterModelSeg',val=>{filterModel=val;clearPresetActive();});
-setupSeg('codecSeg',val=>{codec=val;applyCodecUI();clearPresetActive();updateTotalReduction();});
 
-// ── Toggle handlers ────────────────────────────────────────────────────
-document.getElementById('starterToggleBtn').addEventListener('click',()=>{
-  starterOpen=!starterOpen;
-  setSvgToggle(document.getElementById('starterToggleBtn'),starterOpen);
-  document.getElementById('presetControls').classList.toggle('hidden',!starterOpen);
-});
-document.getElementById('filterToggleBtn').addEventListener('click',()=>{
-  filterActive=!filterActive;
-  setSvgToggle(document.getElementById('filterToggleBtn'),filterActive);
-  document.getElementById('filterControls').classList.toggle('hidden',!filterActive);
-  clearPresetActive();
-});
-document.getElementById('ditherBtn').addEventListener('click',()=>{
-  ditherActive=!ditherActive;
-  setSvgToggle(document.getElementById('ditherBtn'),ditherActive);
-  clearPresetActive();
+// ── Document-level event delegation ───────────────────────────────────
+// Survives Readymag destroying/recreating the widget DOM on tab switch.
+
+document.addEventListener('click', e=>{
+  const r=document.getElementById('reducer');
+  if(!r||!r.contains(e.target))return;
+  const t=e.target;
+
+  // Seg buttons (filter model, codec)
+  const segBtn=t.closest('#filterModelSeg .btn, #codecSeg .btn');
+  if(segBtn){
+    const seg=segBtn.closest('#filterModelSeg,#codecSeg');
+    if(seg){
+      seg.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+      segBtn.classList.add('active');
+      if(seg.id==='filterModelSeg'){filterModel=segBtn.dataset.val;clearPresetActive();}
+      if(seg.id==='codecSeg'){codec=segBtn.dataset.val;applyCodecUI();clearPresetActive();updateTotalReduction();}
+    }
+    return;
+  }
+
+  // Toggle buttons
+  if(t.id==='starterToggleBtn'||t.closest('#starterToggleBtn')){
+    starterOpen=!starterOpen;
+    setSvgToggle(document.getElementById('starterToggleBtn'),starterOpen);
+    document.getElementById('presetControls').classList.toggle('hidden',!starterOpen);
+    return;
+  }
+  if(t.id==='filterToggleBtn'||t.closest('#filterToggleBtn')){
+    filterActive=!filterActive;
+    setSvgToggle(document.getElementById('filterToggleBtn'),filterActive);
+    document.getElementById('filterControls').classList.toggle('hidden',!filterActive);
+    clearPresetActive();
+    return;
+  }
+  if(t.id==='ditherBtn'||t.closest('#ditherBtn')){
+    ditherActive=!ditherActive;
+    setSvgToggle(document.getElementById('ditherBtn'),ditherActive);
+    clearPresetActive();
+    return;
+  }
+  if(t.id==='bypassBtn'||t.closest('#bypassBtn')){
+    bypass=!bypass;
+    setSvgToggle(document.getElementById('bypassBtn'),bypass);
+    if(isPlaying&&processedBuf&&originalBuf){
+      const ctx=getCtx();
+      const elapsed=ctx.currentTime-playbackStart;
+      const targetBuf=bypass?originalBuf:processedBuf;
+      startSource(targetBuf,Math.min(Math.max(0,elapsed),targetBuf.duration-0.01),bypass?null:processedSR);
+    }
+    return;
+  }
+
+  // Channel buttons
+  if(t.id==='btnStereo'){
+    monoOutput=false;
+    document.getElementById('btnStereo').classList.add('active');
+    document.getElementById('btnMono').classList.remove('active');
+    clearPresetActive();updateTotalReduction();
+    return;
+  }
+  if(t.id==='btnMono'){
+    monoOutput=true;
+    document.getElementById('btnMono').classList.add('active');
+    document.getElementById('btnStereo').classList.remove('active');
+    clearPresetActive();updateTotalReduction();
+    return;
+  }
+
+  // Drop zone click → trigger file input
+  if(t.closest('#dropZone')){
+    document.getElementById('fileInput')?.click();
+    return;
+  }
+
+  // Preview button
+  if(t.id==='previewBtn'||t.closest('#previewBtn')){
+    if(isPlaying){stopPlayback();return;}
+    if(!files.length)return;
+    playQueued=true;
+    playFile(0);
+    return;
+  }
+
+  // Download button
+  if(t.id==='downloadBtn'||t.closest('#downloadBtn')){
+    handleDownload();
+    return;
+  }
+
+  // Row play buttons
+  const rowBtn=t.closest('.row-play-btn');
+  if(rowBtn){
+    const idx=parseInt(rowBtn.dataset.idx);
+    if(isPlaying&&currentFileIdx===idx){stopPlayback();}
+    else{stopPlayback();playQueued=false;playFile(idx);}
+    return;
+  }
+
+  // Preset buttons
+  const presetBtn=t.closest('.preset-btn');
+  if(presetBtn){
+    applyPreset(presetBtn.dataset.preset);
+    return;
+  }
 });
 
-// ── Slider events ──────────────────────────────────────────────────────
-document.getElementById('sampleRate').addEventListener('input',function(){
-  document.getElementById('sampleRateVal').textContent=srLabel(sliderToSR(parseInt(this.value)));
-  clearPresetActive();
-  updateTotalReduction();
-});
-document.getElementById('bitDepth').addEventListener('input',function(){
-  document.getElementById('bitDepthVal').textContent=parseInt(this.value)+'-bit';
-  clearPresetActive();
-  updateTotalReduction();
-});
-document.getElementById('filterLP').addEventListener('input',function(){
-  document.getElementById('filterLPVal').textContent=fcLabel(sliderToLP(parseInt(this.value)),false);
-  clearPresetActive();
-});
-document.getElementById('filterHP').addEventListener('input',function(){
-  document.getElementById('filterHPVal').textContent=fcLabel(sliderToHP(parseInt(this.value)),true);
-  clearPresetActive();
-});
-document.getElementById('filterRes').addEventListener('input',function(){
-  document.getElementById('filterResVal').textContent=this.value;
-  clearPresetActive();
-});
-document.getElementById('btnStereo').addEventListener('click',()=>{
-  monoOutput=false;
-  document.getElementById('btnStereo').classList.add('active');
-  document.getElementById('btnMono').classList.remove('active');
-  clearPresetActive();
-  updateTotalReduction();
-});
-document.getElementById('btnMono').addEventListener('click',()=>{
-  monoOutput=true;
-  document.getElementById('btnMono').classList.add('active');
-  document.getElementById('btnStereo').classList.remove('active');
-  clearPresetActive();
-  updateTotalReduction();
+document.addEventListener('input', e=>{
+  const r=document.getElementById('reducer');
+  if(!r||!r.contains(e.target))return;
+  const t=e.target;
+  if(t.id==='sampleRate'){
+    document.getElementById('sampleRateVal').textContent=srLabel(sliderToSR(parseInt(t.value)));
+    clearPresetActive();updateTotalReduction();
+  }
+  if(t.id==='bitDepth'){
+    document.getElementById('bitDepthVal').textContent=parseInt(t.value)+'-bit';
+    clearPresetActive();updateTotalReduction();
+  }
+  if(t.id==='filterLP'){
+    document.getElementById('filterLPVal').textContent=fcLabel(sliderToLP(parseInt(t.value)),false);
+    clearPresetActive();
+  }
+  if(t.id==='filterHP'){
+    document.getElementById('filterHPVal').textContent=fcLabel(sliderToHP(parseInt(t.value)),true);
+    clearPresetActive();
+  }
+  if(t.id==='filterRes'){
+    document.getElementById('filterResVal').textContent=t.value;
+    clearPresetActive();
+  }
 });
 
-// ── File loading ───────────────────────────────────────────────────────
-const dropZone=document.getElementById('dropZone');
-const fileInput=document.getElementById('fileInput');
-dropZone.addEventListener('click',()=>fileInput.click());
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('active');});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('active'));
-dropZone.addEventListener('drop',e=>{
-  e.preventDefault();dropZone.classList.remove('active');
+document.addEventListener('change', e=>{
+  const r=document.getElementById('reducer');
+  if(!r||!r.contains(e.target))return;
+  if(e.target.id==='fileInput') handleFiles(Array.from(e.target.files));
+});
+
+document.addEventListener('dragover', e=>{
+  if(!e.target.closest('#dropZone'))return;
+  e.preventDefault();
+  document.getElementById('dropZone').classList.add('active');
+});
+document.addEventListener('dragleave', e=>{
+  if(!e.target.closest('#dropZone'))return;
+  document.getElementById('dropZone').classList.remove('active');
+});
+document.addEventListener('drop', e=>{
+  if(!e.target.closest('#dropZone'))return;
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('active');
   handleFiles(Array.from(e.dataTransfer.files));
 });
-fileInput.addEventListener('change',e=>handleFiles(Array.from(e.target.files)));
 
 async function handleFiles(incoming){
   if(!incoming.length)return;
@@ -454,20 +534,6 @@ function renderTable(){
     tbody.appendChild(tr);
   });
   wrap.classList.remove('hidden');
-
-  // Row play buttons
-  tbody.querySelectorAll('.row-play-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const idx=parseInt(btn.dataset.idx);
-      if(isPlaying&&currentFileIdx===idx){
-        stopPlayback();
-      } else {
-        stopPlayback();
-        playQueued=false;
-        playFile(idx);
-      }
-    });
-  });
 }
 
 function setRowPlaying(idx){
@@ -774,16 +840,11 @@ function startSource(buf, offset, targetSR){
   src.buffer=buf;
 
   if(targetSR && targetSR < ctx.sampleRate){
-    const cutoff=targetSR * 0.45;
-    const filters=[...Array(5)].map(()=>{
-        const f=ctx.createBiquadFilter();
-        f.type='lowpass';f.frequency.value=cutoff;f.Q.value=0.707;
-        return f;
-    });
-    filters.reduce((a,b)=>{a.connect(b);return b;});
-    src.connect(filters[0]);
-    filters[filters.length-1].connect(ctx.destination);
-} else {
+    const cutoff=targetSR/2;
+    const f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),f3=ctx.createBiquadFilter();
+    [f1,f2,f3].forEach(f=>{f.type='lowpass';f.frequency.value=cutoff;f.Q.value=0.707;});
+    src.connect(f1);f1.connect(f2);f2.connect(f3);f3.connect(ctx.destination);
+  } else {
     src.connect(ctx.destination);
   }
 
@@ -819,25 +880,6 @@ function stopPlayback(){
   setControlsDisabled(false);
   document.getElementById('downloadBtn').disabled=!files.length;
 }
-
-// Main preview button — plays full queue from start
-document.getElementById('previewBtn').addEventListener('click',()=>{
-  if(isPlaying){stopPlayback();return;}
-  if(!files.length)return;
-  playQueued=true;
-  playFile(0);
-});
-
-document.getElementById('bypassBtn').addEventListener('click',()=>{
-  bypass=!bypass;
-  setSvgToggle(document.getElementById('bypassBtn'),bypass);
-  if(isPlaying&&processedBuf&&originalBuf){
-    const ctx=getCtx();
-    const elapsed=ctx.currentTime-playbackStart;
-    const targetBuf=bypass?originalBuf:processedBuf;
-    startSource(targetBuf,Math.min(Math.max(0,elapsed),targetBuf.duration-0.01),bypass?null:processedSR);
-  }
-});
 
 // ── Download — zip all files ────────────────────────────────────────────
 function encodeWav(channels,sr,bits){
@@ -903,7 +945,7 @@ function buildZip(entries){
   return new Blob([out],{type:'application/zip'});
 }
 
-document.getElementById('downloadBtn').addEventListener('click',async()=>{
+async function handleDownload(){
   if(!files.length)return;
   stopPlayback();
   document.getElementById('downloadBtn').disabled=true;
@@ -932,7 +974,7 @@ document.getElementById('downloadBtn').addEventListener('click',async()=>{
   }
   document.getElementById('downloadBtn').disabled=false;
   document.getElementById('previewBtn').disabled=false;
-});
+}
 
 function setStatus(msg){
   const el=document.getElementById('status');
@@ -999,10 +1041,6 @@ function applyPreset(name){
   setSvgToggle(document.getElementById('ditherBtn'),true);
   updateTotalReduction();
 }
-
-document.querySelectorAll('.preset-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>applyPreset(btn.dataset.preset));
-});
 
 applyCodecUI();
 </script>
