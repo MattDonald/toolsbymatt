@@ -1,13 +1,54 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+// ── Audio ──────────────────────────────────────────────────────────────────
+let _audioCtx = null;
+let _audioSource = null;
+let _audioBtn = null;
+
+function _getCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+
+function stopCurrentSample() {
+  if (_audioSource) { try { _audioSource.stop(); } catch(e) {} _audioSource = null; }
+  if (_audioBtn) { _audioBtn.classList.remove('playing'); _audioBtn = null; }
+}
+
+async function playSample(slot, btn) {
+  if (_audioBtn === btn) { stopCurrentSample(); return; }
+  stopCurrentSample();
+  const ctx = _getCtx();
+  if (ctx.state === 'suspended') await ctx.resume();
+  const entry = Object.values(zip.files).find(function(f) {
+    const m = f.name.match(/sounds\/(\d+)/i);
+    return m && parseInt(m[1]) === slot;
+  });
+  if (!entry) { console.warn('No WAV found for slot', slot); return; }
+  const raw = await entry.async('arraybuffer');
+  const buf = await ctx.decodeAudioData(raw.slice(0));
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start(0);
+  src.onended = function() {
+    if (_audioBtn === btn) { btn.classList.remove('playing'); _audioBtn = null; _audioSource = null; }
+  };
+  _audioSource = src;
+  _audioBtn = btn;
+  btn.classList.add('playing');
+}
+</script>
 <style>
     #epRemapper { text-transform: lowercase; width: 100%; }
   #epRemapper .table-wrap { overflow-y: auto; max-height: calc(5 * 37px + 41px); margin: 16px 0; }
   #epRemapper table { border-collapse: collapse; width: 100%; margin: 0; }
-  #epRemapper th, #epRemapper td { border-bottom: 1px solid #FC6F2F; padding: 6px 10px; text-align: left; }
+  #epRemapper th, #epRemapper td { border-bottom: 1px solid #FC6F2F; padding: 6px 10px; text-align: left; vertical-align: middle; }
   #epRemapper th { background: #FC6F2F; color: #FFEBD2; position: sticky; top: 0; z-index: 1; font-weight: 400; font-variation-settings: 'wght' 600; }
   #epRemapper tr:last-child td { border-bottom: none; }
   #epRemapper tr.empty { color: #aaa; }
-  #epRemapper th:first-child, #epRemapper td:first-child { max-width: 70px; }
+  #epRemapper th:first-child, #epRemapper td:first-child { max-width: 80px; }
   #epRemapper input[type="number"] { background: #FC6F2F; border: none; width: 100%; border-radius: 100px; text-align: center !important; color: #FFEBD2 !important; }
   #epRemapper input::-webkit-outer-spin-button, #epRemapper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   #epRemapper #bulk-offset { background: transparent; border: none; color: #FC6F2F !important; font-family: custom_175773; font-style: normal; font-size: 50px; font-weight: 500; width: auto; min-width: 60px; outline: none; text-align: right; -moz-appearance: textfield; appearance: textfield; }
@@ -33,6 +74,9 @@
   #epRemapper h2.loaded { font-size: 18px; margin: 0; line-height: 25px; }
   #epRemapper h3 { font-family: JetBrains Mono; font-weight: 400; font-size: 20px; line-height: 30px; font-style: italic; color: rgba(252, 111, 47, 1); text-align: left; font-variation-settings: 'wght' 600; margin: 20px 0 0 0; }
   #epRemapper p, #epRemapper table, #epRemapper input[type="number"] { color: rgba(252, 111, 47, 1); font-family: JetBrains Mono; font-style: italic; text-align: left; font-size: 12px; font-weight: 400; line-height: 20px; font-variation-settings: 'wght' 600; }
+  #epRemapper .play-btn { background: none; border: none; padding: 0; cursor: pointer; width: 20px; height: 20px; overflow: hidden; margin-right: 6px; top: -3px; }
+  #epRemapper .play-btn svg { width: 20px; height: 40px; position: absolute; top: 0; left: 0; }
+  #epRemapper .play-btn.playing svg { top: -20px; }
 </style>
 
 <div id="epRemapper">
@@ -57,28 +101,26 @@ const GROUPS = ['a','b','c','d'];
 let state = null; // parsed project data
 let zip = null;   // the original JSZip instance
 
-// ── Drop zone — listeners on document so they survive full widget rebuilds ──
+// ── Drop zone ──────────────────────────────────────────────────────────────
 
-const getDropZone  = () => document.getElementById('drop-zone');
-const getFileInput = () => document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
 
-document.addEventListener('click', e => {
-  if (e.target.closest('#drop-zone')) getFileInput() && getFileInput().click();
-});
-document.addEventListener('dragover', e => {
-  if (e.target.closest('#drop-zone')) { e.preventDefault(); getDropZone() && getDropZone().classList.add('hover'); }
-});
-document.addEventListener('dragleave', e => {
-  if (e.target.closest('#drop-zone')) getDropZone() && getDropZone().classList.remove('hover');
-});
-document.addEventListener('drop', e => {
-  if (!e.target.closest('#drop-zone')) return;
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('hover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+dropZone.addEventListener('drop', e => {
   e.preventDefault();
-  getDropZone() && getDropZone().classList.remove('hover');
+  dropZone.classList.remove('hover');
   handleFile(e.dataTransfer.files[0]);
 });
-document.addEventListener('change', e => {
-  if (e.target.id === 'file-input') handleFile(e.target.files[0]);
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.play-btn');
+  if (btn && btn.closest('#epRemapper')) {
+    const slot = parseInt(btn.dataset.slot);
+    playSample(slot, btn);
+  }
 });
 
 // ── File handling ──────────────────────────────────────────────────────────
@@ -96,9 +138,9 @@ async function handleFile(file) {
     const arrayBuffer = await file.arrayBuffer();
     zip = await JSZip.loadAsync(arrayBuffer);
     state = await parsePpak(zip, file.name);
-    getDropZone().classList.add('loaded');
-    getDropZone().querySelector('h2').textContent = 'add another .ppak file to remap';
-    getDropZone().querySelector('h2').classList.add('loaded');
+    dropZone.classList.add('loaded');
+    dropZone.querySelector('h2').textContent = 'add another .ppak file to remap';
+    dropZone.querySelector('h2').classList.add('loaded');
     renderAll();
   } catch (err) {
     sections.innerHTML = `<h3 class="error">error parsing file: ${err.message}</h3>`;
@@ -240,7 +282,7 @@ function renderAll() {
     tr.innerHTML = `
       <td>${a.pads.map(p => p.group + ' ' + p.label).join(', ')}</td>
       <td>${a.originalSlot}</td>
-      <td>${a.soundName}</td>
+      <td><button class="play-btn" data-slot="${a.originalSlot}" aria-label="play"><svg viewBox="0 0 80 160" xmlns="http://www.w3.org/2000/svg"><path d="M40 0C17.941 0 0 17.941 0 40C0 62.059 17.941 80 40 80C62.059 80 80 62.059 80 40C80 17.941 62.059 0 40 0ZM54.039 42.141L34.16 54.289C32.6092 55.2382 30.66 54.0507 30.66 52.1484V27.8474C30.66 25.949 32.6092 24.7576 34.16 25.7068L54.039 37.8548C55.5976 38.804 55.5976 41.1829 54.039 42.136V42.141Z" fill="#FC6F2F"/><path fill-rule="evenodd" clip-rule="evenodd" d="M80 120C80 142.091 62.0914 160 40 160C17.912 160 0 142.091 0 120C0 97.9086 17.9086 80 40 80C62.0914 80 80 97.9086 80 120ZM28.2276 103.552C25.6572 103.552 23.5519 105.657 23.5519 108.227V131.769C23.5519 134.339 25.6572 136.445 28.2276 136.445H51.769C54.3428 136.445 56.4446 134.339 56.4446 131.769V108.227C56.4446 105.657 54.3394 103.552 51.769 103.552H28.2276Z" fill="#FC6F2F"/></svg></button> ${a.soundName}</td>
       <td>${a.usedInScene ? '<span class="scene-tick"><svg width="19" height="15" viewBox="-0.5 -5 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M33.168 0.582031L15.25 18.082L6.49997 9.33203L0.667969 15.1679L15.25 29.7499L39 6.41793L33.168 0.582031Z"/></svg></span>' : '<span class="scene-cross"><svg width="15" height="15" viewBox="-3 -3 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.125 17.0819L0.707031 6.66794L6.60153 0.773438L17.0155 11.1914L27.4335 0.773438L33.328 6.66794L22.91 17.0819L33.117 27.2889L27.2225 33.1834L17.0155 22.9764L6.80853 33.1834L0.917931 27.2889L11.125 17.0819Z"/></svg></span>'}</td>
       <td>
         <div class="slot-input">
@@ -284,6 +326,7 @@ function renderAll() {
   sections.appendChild(exportSec);
 
   // Wire up inputs
+
   document.querySelectorAll('.new-slot-input').forEach(input => {
     input.addEventListener('input', e => {
       const idx = parseInt(e.target.dataset.idx);
@@ -342,6 +385,7 @@ function applyBulkOffset() {
   state.assignments.forEach((a, i) => {
     a.newSlot = Math.max(1, Math.min(999, a.originalSlot + offset));
   });
+
   document.querySelectorAll('.new-slot-input').forEach(input => {
     const idx = parseInt(input.dataset.idx);
     input.value = state.assignments[idx].newSlot;
@@ -351,6 +395,7 @@ function applyBulkOffset() {
 
 function resetSlots() {
   state.assignments.forEach(a => { a.newSlot = a.originalSlot; });
+
   document.querySelectorAll('.new-slot-input').forEach(input => {
     const idx = parseInt(input.dataset.idx);
     input.value = state.assignments[idx].originalSlot;
