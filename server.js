@@ -32,7 +32,7 @@ const PRODUCTS = {
     process.env.PRODUCT_2_LINK,
     process.env.PRODUCT_3_LINK,
   ],
-  'free_sample_pack': [process.env.FREE_PRODUCT_LINK],
+  'ep_ableton': [process.env.FREE_PRODUCT_LINK],
 };
 
 // Product metadata: display name for each Dropbox link
@@ -43,7 +43,7 @@ const PRODUCT_META = {
   [process.env.PRODUCT_4_LINK]: 'chroma_control',
   [process.env.PRODUCT_5_LINK]: 'subphatty_sync',
   [process.env.PRODUCT_6_LINK]: 'art_tools',
-  [process.env.FREE_PRODUCT_LINK]: 'free_sample_pack',
+  [process.env.FREE_PRODUCT_LINK]: 'ep_ableton',
 };
 
 // Token store: active 48-hour download tokens held in memory
@@ -120,7 +120,7 @@ app.post("/free-product", express.urlencoded({ extended: true }), express.json()
   res.json({ success: true });
   
   // Free product details
-  const freeProductName = 'free_sample_pack';
+  const freeProductName = 'ep_ableton';
   const dropboxLinks = PRODUCTS[freeProductName];
   
   if (!dropboxLinks) {
