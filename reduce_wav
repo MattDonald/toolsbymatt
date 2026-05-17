@@ -6,8 +6,8 @@
   #reducer .reducedInfo .arrow { color: #FC6F2F; margin: 0 4px; }
   #reducer .row { display: flex; align-items: center; gap: 14px; margin: 20px 0; }
   #reducer .slider-wrap { position: relative; flex: 1; height: 26px; display: flex; align-items: center; }
-  #reducer input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: #FC6F2F; outline: none; cursor: pointer; position: relative; z-index: 2; }
-  #reducer input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #fc6f2f; cursor: pointer; border: 5px solid #FFEBD2; }
+  #reducer input[type=range] { -webkit-appearance: none; appearance: none; -moz-appearance: none; width: 100%; height: 4px; background: #FC6F2F; outline: none; cursor: pointer; position: relative; z-index: 2; }
+  #reducer input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #fc6f2f; cursor: pointer; border: 5px solid #FFEBD2; }
   #reducer input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
   #reducer input[type=range]::-moz-range-thumb { width: 25px; height: 25px; border-radius: 50%; background: #fc6f2f; cursor: pointer; border: 5px solid #FFEBD2; }
   #reducer .seg { display: flex; flex-wrap: wrap; gap: 6px; }
