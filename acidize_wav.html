@@ -7,20 +7,23 @@
   #acidize h3 { font-family: JetBrains Mono; font-weight: 400; font-size: 20px; line-height: 30px; font-style: italic; color: rgba(252, 111, 47, 1); text-align: left; font-variation-settings: 'wght' 600; margin: 20px 0 0 0; }
   #acidize #bottomArea { margin-top: -50px; text-align: center; }
   #acidize #bpmRow { display: none; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; color: #FC6F2F; }
-  #acidize #bpmRow input[type="number"], #acidize #bpmRow select { background: transparent; border: none; color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; font-size: 50px; font-weight: 500; width: auto; min-width: 60px; outline: none; text-align: right; -moz-appearance: textfield; appearance: textfield; }
+  #acidize #bpmRow input[type="number"], #acidize #bpmRow select { background: transparent; border: none; color: rgba(252, 111, 47, 1); font-family: custom_175773; font-style: normal; font-size: 50px; font-weight: 500; width: auto; min-width: 60px; outline: none; text-align: right; -moz-appearance: textfield; appearance: textfield; -webkit-appearance: none; }
   #acidize #bpmRow input[type="number"]::-webkit-outer-spin-button, #acidize #bpmRow input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   #acidize #bpmRow input[type="number"]::placeholder { color: rgba(252, 111, 47, 0.5); }
-  #acidize #bpmRow select { width: 80px; cursor: pointer; }
+  #acidize #bpmRow select { cursor: pointer; }
   #acidize #bpmLine, #acidize #timeSigLine { display: flex; align-items: center; justify-content: center; gap: 8px; }
   #acidize #bpmLine { position: relative; left: -20px; }
   #acidize #acidizeBtn { display: none; margin-top: -10px; background: #FFEBD2; color: #FC6F2F; border: 1px solid #FC6F2F; border-radius: 100px; padding: 9px 28px 12px 28px; font-family: custom_175773; font-weight: 500; font-size: 18px; cursor: not-allowed; line-height: 1; }
   #acidize #acidizeBtn:not(:disabled) { background: #FC6F2F; color: #FFEBD2; cursor: pointer; }
   #acidize #acidizeBtn:not(:disabled):hover { background: #FFEBD2; color: #FC6F2F; }
   #acidize #acidizeStatus { color: rgba(252, 111, 47, 1); font-family: JetBrains Mono; font-style: italic; text-align: center; font-size: 12px; font-weight: 400; line-height: 20px; font-variation-settings: 'wght' 600; margin-top: 12px; }
-  @media screen and (max-width: 320px) {
+  #acidize .slash { margin: 0 0 0 -30px!important; }
+  @media (max-width: 402px) {
     #acidize #bpmRow .bpm-label, #acidize #bpmRow .slash { margin: 0; }
-    #acidize #bpmLine { margin: 30px 0; }
-    #acidize #timeSigLine { margin: -30px 0 30px 0; }
+    #acidize #timeSigLine { margin: 10px 0 40px 50px; }
+    #acidize #bpmRow select { width: 130px; }
+    #acidize #bpmLine { left: -40px; top: 20px; }
+    #acidize .slash { margin: 0 0px 0 -50px!important }
   }
 </style>
 
