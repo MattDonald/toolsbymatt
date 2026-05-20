@@ -310,11 +310,13 @@ async function sendDownloadEmail(email, firstName, productName, downloadUrls, pr
       downloadUrl3: downloadUrls[2] || '',
       downloadUrl4: downloadUrls[3] || '',
       downloadUrl5: downloadUrls[4] || '',
+      downloadUrl6: downloadUrls[5] || '',
       productName1: productNames[0] || '',
       productName2: productNames[1] || '',
       productName3: productNames[2] || '',
       productName4: productNames[3] || '',
       productName5: productNames[4] || '',
+      productName6: productNames[5] || '',
     }
   };
 
@@ -336,18 +338,7 @@ async function sendFreeProductEmail(email, productName, downloadUrls, productNam
       firstName: 'there',
       productName,
       downloadUrl1: downloadUrls[0] || '',
-      downloadUrl2: downloadUrls[1] || '',
-      downloadUrl3: downloadUrls[2] || '',
-      downloadUrl4: downloadUrls[3] || '',
-      downloadUrl5: downloadUrls[4] || '',
-      downloadUrl6: downloadUrls[5] || '',
-      productName5: productNames[4] || '',
-      productName6: productNames[5] || '',
       productName1: productNames[0] || '',
-      productName2: productNames[1] || '',
-      productName3: productNames[2] || '',
-      productName4: productNames[3] || '',
-      productName5: productNames[4] || '',
     }
   };
 
