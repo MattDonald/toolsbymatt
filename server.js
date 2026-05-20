@@ -163,31 +163,48 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
     const fullName    = session.customer_details?.name || '';
     const firstName   = fullName.split(' ')[0] || 'there';
     const lineItems   = await stripe.checkout.sessions.listLineItems(session.id);
-    const productName = lineItems.data[0]?.description;
-    const dropboxLink = PRODUCTS[productName];
-    
-    if (!email || !dropboxLink) {
-      console.warn("Could not match product:", productName);
+
+    // Collect ALL download URLs and product names across all items in cart
+    const allDownloadUrls = [];
+    const allProductNames = [];
+    const purchasedProducts = [];
+
+    for (const item of lineItems.data) {
+      const productName = item.description;
+      const dropboxLinks = PRODUCTS[productName];
+
+      if (!dropboxLinks) {
+        console.warn("Could not match product:", productName);
+        continue;
+      }
+
+      purchasedProducts.push(productName);
+
+      // Generate tokens for each file in this product
+      for (const link of dropboxLinks) {
+        const token = createToken(link, productName);
+        allDownloadUrls.push(`${process.env.RENDER_URL}/download?token=${token}`);
+        allProductNames.push(PRODUCT_META[link] || productName);
+      }
+    }
+
+    if (!email || allDownloadUrls.length === 0) {
+      console.warn("No valid products found for session:", session.id);
       return res.json({ received: true });
     }
-    
-    // Generate one token per file (bundles will have multiple)
-    const dropboxLinks = PRODUCTS[productName];
-    const downloadUrls = dropboxLinks.map((link, index) => {
-      const token = createToken(link, `${productName} - File ${index + 1}`);
-      return `${process.env.RENDER_URL}/download?token=${token}`;
-    });
 
     // Respond to Stripe BEFORE doing slow operations
     res.json({ received: true });
 
-    // Process asynchronously after response sent
-    await Promise.all([
-      addToCustomersList(email, fullName, productName),
-      sendDownloadEmail(email, firstName, productName, downloadUrls),
-    ]);
+    // Add to customers list for each product purchased
+    for (const productName of purchasedProducts) {
+      await addToCustomersList(email, fullName, productName);
+    }
 
-    console.log(`Done for ${email} — ${productName}`);
+    // Send ONE email with ALL download links
+    await sendDownloadEmail(email, firstName, purchasedProducts.join(', '), allDownloadUrls, allProductNames);
+
+    console.log(`Done for ${email} — ${purchasedProducts.join(', ')}`);
   } else {
     res.json({ received: true });
   }
@@ -278,11 +295,8 @@ async function addToMarketingList(email) {
 }
 
 // Send the transactional download email via Brevo template
-async function sendDownloadEmail(email, firstName, productName, downloadUrls) {
-  // Get the Dropbox links for this product to look up display names
-  const dropboxLinks = PRODUCTS[productName];
-  // Map each link to its display name from PRODUCT_META
-  const productNames = dropboxLinks.map(link => PRODUCT_META[link] || productName);
+async function sendDownloadEmail(email, firstName, productName, downloadUrls, productNames) {
+  // productNames passed in directly from webhook handler
   
   const emailData = {
     to: [{ email: email }],
