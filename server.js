@@ -46,27 +46,24 @@ const PRODUCT_META = {
   [process.env.FREE_PRODUCT_LINK]: 'ep_ableton',
 };
 
-// Token store: active 48-hour download tokens held in memory
-const tokenStore = {};
+// Token store: Redis-backed persistent storage (survives server restarts)
+const Redis = require('ioredis');
+const redis = new Redis(process.env.REDIS_URL);
 
-function createToken(dropboxLink, productName) {
-  const token     = crypto.randomBytes(32).toString('hex');
-  const expiresAt = Date.now() + (48 * 60 * 60 * 1000);
-  tokenStore[token] = { dropboxLink, expiresAt, productName };
+async function createToken(dropboxLink, productName) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const data  = JSON.stringify({ dropboxLink, productName });
+  await redis.set(token, data, 'EX', 48 * 60 * 60); // expires in 48 hours
   return token;
 }
 
-// Download route: customer clicks the link in their email
-app.get("/download", (req, res) => {
+app.get("/download", async (req, res) => {
   const { token } = req.query;
-  const record    = tokenStore[token];
-  if (!record) {
+  const data      = await redis.get(token);
+  if (!data) {
     return res.redirect('https://tools.mattdonald.com/download-expired');
   }
-  if (Date.now() > record.expiresAt) {
-    delete tokenStore[token];
-    return res.redirect('https://tools.mattdonald.com/download-expired');
-  }
+  const record = JSON.parse(data);
   res.redirect(record.dropboxLink);
 });
 
@@ -129,10 +126,10 @@ app.post("/free-product", express.urlencoded({ extended: true }), express.json()
   }
   
   // Generate download token (48 hour expiry)
-  const downloadUrls = dropboxLinks.map((link, index) => {
-    const token = createToken(link, `${freeProductName} - File ${index + 1}`);
+  const downloadUrls = await Promise.all(dropboxLinks.map(async (link, index) => {
+    const token = await createToken(link, `${freeProductName} - File ${index + 1}`);
     return `${process.env.RENDER_URL}/download?token=${token}`;
-  });
+  }));
   
   const productNames = dropboxLinks.map(link => PRODUCT_META[link] || freeProductName);
   
@@ -182,7 +179,7 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
 
       // Generate tokens for each file in this product
       for (const link of dropboxLinks) {
-        const token = createToken(link, productName);
+        const token = await createToken(link, productName);
         allDownloadUrls.push(`${process.env.RENDER_URL}/download?token=${token}`);
         allProductNames.push(PRODUCT_META[link] || productName);
       }
