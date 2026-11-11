@@ -32,7 +32,9 @@ const PRODUCTS = {
     process.env.PRODUCT_2_LINK,
     process.env.PRODUCT_3_LINK,
   ],
-  'ep_ableton': [process.env.FREE_PRODUCT_LINK],
+  // Free products (claimed via Readymag forms, not Stripe)
+  'ep_ableton': [process.env.FREE_PRODUCT_1_LINK],
+  'sidekick_taz': [process.env.FREE_PRODUCT_2_LINK],
 };
 
 // Product metadata: display name for each Dropbox link
@@ -43,7 +45,8 @@ const PRODUCT_META = {
   [process.env.PRODUCT_4_LINK]: 'chroma_control',
   [process.env.PRODUCT_5_LINK]: 'subphatty_sync',
   [process.env.PRODUCT_6_LINK]: 'art_tools',
-  [process.env.FREE_PRODUCT_LINK]: 'ep_ableton',
+  [process.env.FREE_PRODUCT_1_LINK]: 'ep_ableton',
+  [process.env.FREE_PRODUCT_2_LINK]: 'sidekick_taz',
 };
 
 // Token store: Redis-backed persistent storage (survives server restarts)
@@ -57,6 +60,7 @@ async function createToken(dropboxLink, productName) {
   return token;
 }
 
+// Download route: customer clicks the link in their email
 app.get("/download", async (req, res) => {
   const { token } = req.query;
   const data      = await redis.get(token);
@@ -70,23 +74,23 @@ app.get("/download", async (req, res) => {
 // Form signup route: Readymag sends form data here for marketing list only
 app.post("/signup", express.urlencoded({ extended: true }), express.json(), async (req, res) => {
   console.log("Signup request body:", req.body);
-  
+
   // Readymag sends data in a weird nested format
   let emailAddress;
-  
+
   // Try standard formats first
   emailAddress = req.body.Email || req.body.email;
-  
+
   // Try Readymag's nested format
   if (!emailAddress && req.body['0']) {
     emailAddress = req.body['0'].email || req.body['0'].Email;
   }
-  
+
   if (!emailAddress) {
     console.error("No email found in request:", req.body);
     return res.status(400).json({ error: "Email required" });
   }
-  
+
   try {
     await addToSignupPendingList(emailAddress);
     console.log(`Signup submitted: ${emailAddress} — pending DOI confirmation`);
@@ -97,51 +101,55 @@ app.post("/signup", express.urlencoded({ extended: true }), express.json(), asyn
   }
 });
 
-// Free product route: Readymag form for free download with marketing consent
-app.post("/free-product", express.urlencoded({ extended: true }), express.json(), async (req, res) => {
-  console.log("Free product request body:", req.body);
-  
-  // Extract email from Readymag's nested format
-  let emailAddress;
-  emailAddress = req.body.Email || req.body.email;
-  if (!emailAddress && req.body['0']) {
-    emailAddress = req.body['0'].email || req.body['0'].Email;
-  }
-  
-  if (!emailAddress) {
-    console.error("No email found in free product request:", req.body);
-    return res.status(400).json({ error: "Email required" });
-  }
-  
-  // Respond immediately
-  res.json({ success: true });
-  
-  // Free product details
-  const freeProductName = 'ep_ableton';
-  const dropboxLinks = PRODUCTS[freeProductName];
-  
-  if (!dropboxLinks) {
-    console.error("Free product not configured:", freeProductName);
-    return;
-  }
-  
-  // Generate download token (48 hour expiry)
-  const downloadUrls = await Promise.all(dropboxLinks.map(async (link, index) => {
-    const token = await createToken(link, `${freeProductName} - File ${index + 1}`);
-    return `${process.env.RENDER_URL}/download?token=${token}`;
-  }));
-  
-  const productNames = dropboxLinks.map(link => PRODUCT_META[link] || freeProductName);
-  
-  // Add to BOTH lists: Customers (with free product) AND Marketing Subscribers (with consent)
-  await Promise.all([
-    addToCustomersList(emailAddress, emailAddress, freeProductName),
-    addToMarketingList(emailAddress),
-    sendFreeProductEmail(emailAddress, freeProductName, downloadUrls, productNames),
-  ]);
-  
-  console.log(`Free product sent to: ${emailAddress}`);
-});
+// Free product handler factory: one route per free product, all with marketing consent
+function freeProductRoute(freeProductName) {
+  return async (req, res) => {
+    console.log(`Free product (${freeProductName}) request body:`, req.body);
+
+    // Extract email from Readymag's nested format
+    let emailAddress = req.body.Email || req.body.email;
+    if (!emailAddress && req.body['0']) {
+      emailAddress = req.body['0'].email || req.body['0'].Email;
+    }
+
+    if (!emailAddress) {
+      console.error("No email found in free product request:", req.body);
+      return res.status(400).json({ error: "Email required" });
+    }
+
+    // Respond immediately
+    res.json({ success: true });
+
+    const dropboxLinks = PRODUCTS[freeProductName];
+    if (!dropboxLinks) {
+      console.error("Free product not configured:", freeProductName);
+      return;
+    }
+
+    // Generate download tokens (48 hour expiry)
+    const downloadUrls = await Promise.all(dropboxLinks.map(async (link, index) => {
+      const token = await createToken(link, `${freeProductName} - File ${index + 1}`);
+      return `${process.env.RENDER_URL}/download?token=${token}`;
+    }));
+
+    const productNames = dropboxLinks.map(link => PRODUCT_META[link] || freeProductName);
+
+    // Add to BOTH lists: Customers (with free product) AND Marketing Subscribers (with consent)
+    await Promise.all([
+      addToCustomersList(emailAddress, emailAddress, freeProductName),
+      addToMarketingList(emailAddress),
+      sendFreeProductEmail(emailAddress, freeProductName, downloadUrls, productNames),
+    ]);
+
+    console.log(`Free product ${freeProductName} sent to: ${emailAddress}`);
+  };
+}
+
+const formParsers = [express.urlencoded({ extended: true }), express.json()];
+
+// Free product routes: /free-product/<product-name>
+app.post("/free-product/ep-ableton", ...formParsers, freeProductRoute('ep_ableton'));
+app.post("/free-product/sidekick-taz", ...formParsers, freeProductRoute('sidekick_taz'));
 
 // Webhook route: Stripe fires this after a successful payment
 app.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
@@ -153,7 +161,7 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
     console.error("Webhook error:", err.message);
     return res.status(400).send("Webhook Error");
   }
-  
+
   if (event.type === "checkout.session.completed") {
     const session     = event.data.object;
     const email       = session.customer_details?.email;
@@ -293,8 +301,6 @@ async function addToMarketingList(email) {
 
 // Send the transactional download email via Brevo template
 async function sendDownloadEmail(email, firstName, productName, downloadUrls, productNames) {
-  // productNames passed in directly from webhook handler
-  
   const emailData = {
     to: [{ email: email }],
     sender: { name: 'Matt Donald', email: process.env.BREVO_SENDER_EMAIL },
