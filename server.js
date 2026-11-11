@@ -134,10 +134,10 @@ function freeProductRoute(freeProductName) {
 
     const productNames = dropboxLinks.map(link => PRODUCT_META[link] || freeProductName);
 
-    // Add to BOTH lists: Customers (with free product) AND Marketing Subscribers (with consent)
+    // Customers first (creates the contact + sets SOURCE), then marketing + email together
     // No name is collected on the free form, so pass an empty name
+    await addToCustomersList(emailAddress, '', freeProductName, 'free_product');
     await Promise.all([
-      addToCustomersList(emailAddress, '', freeProductName),
       addToMarketingList(emailAddress),
       sendFreeProductEmail(emailAddress, freeProductName, downloadUrls, productNames),
     ]);
@@ -216,24 +216,27 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
   }
 });
 
-// Add customer to the 'Customers' list ONLY (not Marketing Subscribers)
-// If they already exist, append the new product to their PRODUCTS_PURCHASED list
-// Name attributes are only written when a name is actually provided
-async function addToCustomersList(email, fullName, productName) {
+// Fetch an existing Brevo contact, or null if they don't exist yet
+async function getContact(email) {
+  try {
+    const response = await brevoAPI.get(`/contacts/${encodeURIComponent(email)}`);
+    return response.data;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Add contact to the 'Customers' list (anyone who has downloaded something, paid or free)
+// Appends the product to PRODUCTS_PURCHASED. SOURCE is first-touch: only set if empty.
+async function addToCustomersList(email, fullName, productName, source = 'purchase') {
   const nameParts = fullName.split(' ');
   const firstName = nameParts[0] || '';
   const lastName  = nameParts.slice(1).join(' ') || '';
 
-  // First, check if contact exists and get their current PRODUCTS_PURCHASED
-  let existingProducts = '';
-  try {
-    const response = await brevoAPI.get(`/contacts/${encodeURIComponent(email)}`);
-    existingProducts = response.data.attributes.PRODUCTS_PURCHASED || '';
-  } catch (err) {
-    // Contact doesn't exist yet, that's fine
-  }
+  const existing         = await getContact(email);
+  const existingProducts = existing?.attributes?.PRODUCTS_PURCHASED || '';
+  const existingSource   = existing?.attributes?.SOURCE;
 
-  // Build the new products list: append new product if not already present
   let updatedProducts = existingProducts;
   if (!existingProducts) {
     updatedProducts = productName;
@@ -243,7 +246,7 @@ async function addToCustomersList(email, fullName, productName) {
 
   const attributes = {
     PRODUCTS_PURCHASED: updatedProducts,
-    SOURCE: 'purchase',
+    SOURCE: existingSource || source,
   };
   if (firstName) attributes.FIRSTNAME = firstName;
   if (lastName)  attributes.LASTNAME  = lastName;
@@ -264,14 +267,17 @@ async function addToCustomersList(email, fullName, productName) {
 }
 
 // Add signup to the temporary 'Signup Pending Confirmation' list
+// Works for new contacts AND existing customers. SOURCE is first-touch.
 // Brevo automation will automatically send DOI email and move to Marketing Subscribers
 async function addToSignupPendingList(email) {
+  const existing = await getContact(email);
+
   const contactData = {
     email: email,
     listIds: [parseInt(process.env.SIGNUP_PENDING_LIST_ID)],
-    updateEnabled: false,
+    updateEnabled: true,
     attributes: {
-      SOURCE: 'signup',
+      SOURCE: existing?.attributes?.SOURCE || 'signup',
     }
   };
 
@@ -290,9 +296,6 @@ async function addToMarketingList(email) {
     email: email,
     listIds: [parseInt(process.env.MARKETING_SUBSCRIBERS_LIST_ID)],
     updateEnabled: true,
-    attributes: {
-      SOURCE: 'free_product',
-    }
   };
 
   try {
