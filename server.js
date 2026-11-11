@@ -135,8 +135,9 @@ function freeProductRoute(freeProductName) {
     const productNames = dropboxLinks.map(link => PRODUCT_META[link] || freeProductName);
 
     // Add to BOTH lists: Customers (with free product) AND Marketing Subscribers (with consent)
+    // No name is collected on the free form, so pass an empty name
     await Promise.all([
-      addToCustomersList(emailAddress, emailAddress, freeProductName),
+      addToCustomersList(emailAddress, '', freeProductName),
       addToMarketingList(emailAddress),
       sendFreeProductEmail(emailAddress, freeProductName, downloadUrls, productNames),
     ]);
@@ -217,6 +218,7 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
 
 // Add customer to the 'Customers' list ONLY (not Marketing Subscribers)
 // If they already exist, append the new product to their PRODUCTS_PURCHASED list
+// Name attributes are only written when a name is actually provided
 async function addToCustomersList(email, fullName, productName) {
   const nameParts = fullName.split(' ');
   const firstName = nameParts[0] || '';
@@ -239,16 +241,18 @@ async function addToCustomersList(email, fullName, productName) {
     updatedProducts = existingProducts + ', ' + productName;
   }
 
+  const attributes = {
+    PRODUCTS_PURCHASED: updatedProducts,
+    SOURCE: 'purchase',
+  };
+  if (firstName) attributes.FIRSTNAME = firstName;
+  if (lastName)  attributes.LASTNAME  = lastName;
+
   const contactData = {
     email: email,
     listIds: [parseInt(process.env.CUSTOMERS_LIST_ID)],
     updateEnabled: true,
-    attributes: {
-      FIRSTNAME: firstName,
-      LASTNAME: lastName,
-      PRODUCTS_PURCHASED: updatedProducts,
-      SOURCE: 'purchase',
-    }
+    attributes,
   };
 
   try {
@@ -303,7 +307,7 @@ async function addToMarketingList(email) {
 async function sendDownloadEmail(email, firstName, productName, downloadUrls, productNames) {
   const emailData = {
     to: [{ email: email }],
-    sender: { name: 'Matt Donald', email: process.env.BREVO_SENDER_EMAIL },
+    sender: { name: 'tools by matt', email: process.env.BREVO_SENDER_EMAIL },
     templateId: parseInt(process.env.BREVO_TEMPLATE_ID),
     params: {
       firstName,
@@ -335,7 +339,7 @@ async function sendDownloadEmail(email, firstName, productName, downloadUrls, pr
 async function sendFreeProductEmail(email, productName, downloadUrls, productNames) {
   const emailData = {
     to: [{ email: email }],
-    sender: { name: 'Matt Donald', email: process.env.BREVO_SENDER_EMAIL },
+    sender: { name: 'tools by matt', email: process.env.BREVO_SENDER_EMAIL },
     templateId: parseInt(process.env.BREVO_FREE_PRODUCT_TEMPLATE_ID),
     params: {
       firstName: 'there',
